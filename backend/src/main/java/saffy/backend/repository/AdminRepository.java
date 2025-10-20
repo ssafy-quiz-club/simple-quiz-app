@@ -1,7 +1,7 @@
 
-package com.example.quiz.repository;
+package saffy.backend.repository;
 
-import com.example.quiz.domain.Admin;
+import saffy.backend.domain.Admin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

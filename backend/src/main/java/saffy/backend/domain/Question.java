@@ -1,5 +1,5 @@
 
-package com.example.quiz.domain;
+package saffy.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "questions")
 @Getter
 @Setter
 @NoArgsConstructor
