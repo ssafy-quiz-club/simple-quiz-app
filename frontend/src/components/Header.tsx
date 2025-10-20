@@ -14,7 +14,7 @@ export function Header({ title, currentIndex, totalQuestions, score, onReset, on
     <Wrap>
       <Left>
         <Title>{title}</Title>
-        <Sub>JSON 파일을 직접 import하여 렌더링합니다.</Sub>
+        {/* <Sub>JSON 파일을 직접 import하여 렌더링합니다.</Sub> */}
       </Left>
       <Right>
         <Pill>{currentIndex + 1} / {totalQuestions}</Pill>
