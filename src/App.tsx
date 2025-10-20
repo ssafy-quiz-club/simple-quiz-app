@@ -1,9 +1,14 @@
 import QuizPage from './pages/QuizPage';
+import { GlobalStyle } from './styles/GlobalStyle';
+import { ThemeProvider } from 'styled-components';
+import { theme } from './theme';
 
 function App() {
-  // 향후 이 곳에서 react-router-dom 등을 사용하여 페이지를 교체할 수 있습니다.
   return (
-    <QuizPage />
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <QuizPage />
+    </ThemeProvider>
   );
 }
 
