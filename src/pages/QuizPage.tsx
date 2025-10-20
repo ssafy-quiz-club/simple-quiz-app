@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import '../css/index.css';
 import quizDataJson from '../assets/ai_ml_basics_v1.json';
 import type { QuizData } from '../types';
 
@@ -7,29 +6,29 @@ import { Header } from '../components/Header';
 import { Navigator } from '../components/Navigator';
 import { QuestionCard } from '../components/QuestionCard';
 import { Results } from '../components/Results';
+import styled from 'styled-components';
 
-// 유틸리티 함수
+// 유틸
 const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
-const clamp = (v: number, min: number, max: number): number => Math.max(min, Math.min(max, v));
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
-const STORAGE_KEY = "quiz_state_v3_ai_ml_react";
+const STORAGE_KEY = 'quiz_state_v3_ai_ml_react';
 const quizData: QuizData = quizDataJson;
 
 function QuizPage() {
-  // 상태 관리
   const [order, setOrder] = useState<number[]>([]);
   const [index, setIndex] = useState(0);
   const [picks, setPicks] = useState<Record<string, number>>({});
   const [finished, setFinished] = useState(false);
 
-  // 상태 복원 (최초 1회)
   useEffect(() => {
     const rawState = localStorage.getItem(STORAGE_KEY);
     const savedState = rawState ? JSON.parse(rawState) : null;
-    
-    const initialOrder = savedState?.order && savedState.order.length === quizData.questions.length 
-      ? savedState.order 
-      : shuffle([...Array(quizData.questions.length).keys()]);
+
+    const initialOrder =
+      savedState?.order && savedState.order.length === quizData.questions.length
+        ? savedState.order
+        : shuffle([...Array(quizData.questions.length).keys()]);
 
     setOrder(initialOrder);
     if (savedState) {
@@ -39,13 +38,11 @@ function QuizPage() {
     }
   }, []);
 
-  // 상태 저장
   useEffect(() => {
     const stateToSave = { order, index, picks, finished };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
   }, [order, index, picks, finished]);
 
-  // 파생 상태
   const score = useMemo(() => {
     return order.reduce((acc, qIdx) => {
       const q = quizData.questions[qIdx];
@@ -56,16 +53,14 @@ function QuizPage() {
   const currentQ = quizData.questions[order[index]];
   const totalQuestions = quizData.questions.length;
 
-  // 이벤트 핸들러
   const handleChoiceClick = (choiceIndex: number) => {
     if (!currentQ || picks[currentQ.id] !== undefined) return;
     setPicks(prev => ({ ...prev, [currentQ.id]: choiceIndex }));
   };
 
   const handleNext = () => {
-    if (index === totalQuestions - 1) {
-      setFinished(true);
-    } else {
+    if (index === totalQuestions - 1) setFinished(true);
+    else {
       setIndex(prev => clamp(prev + 1, 0, totalQuestions - 1));
       setFinished(false);
     }
@@ -75,37 +70,42 @@ function QuizPage() {
     setIndex(prev => clamp(prev - 1, 0, totalQuestions - 1));
     setFinished(false);
   };
-  
+
   const handleNavClick = (newIndex: number) => {
     setIndex(newIndex);
     setFinished(false);
   };
 
   const handleReset = () => {
-    if (!confirm("진행을 초기화할까요?")) return;
+    if (!confirm('진행을 초기화할까요?')) return;
     setPicks({});
     setIndex(0);
     setFinished(false);
   };
 
   const handleShuffle = () => {
-    if (!confirm("문항 순서를 재섞고 진행을 초기화합니다.")) return;
+    if (!confirm('문항 순서를 재섞고 진행을 초기화합니다.')) return;
     setOrder(shuffle([...Array(totalQuestions).keys()]));
     setPicks({});
     setIndex(0);
     setFinished(false);
   };
 
-  // 렌더링
   if (!currentQ) {
-    return <div className="container"><div className="card"><h1>퀴즈 로딩 중…</h1></div></div>;
+    return (
+      <Container>
+        <Card>
+          <h1>퀴즈 로딩 중…</h1>
+        </Card>
+      </Container>
+    );
   }
 
   return (
     <>
-      <div className="container">
-        <div className="card">
-          <Header 
+      <Container>
+        <Card>
+          <Header
             title={quizData.meta.title}
             currentIndex={index}
             totalQuestions={totalQuestions}
@@ -113,7 +113,7 @@ function QuizPage() {
             onReset={handleReset}
             onShuffle={handleShuffle}
           />
-          <QuestionCard 
+          <QuestionCard
             question={currentQ}
             currentIndex={index}
             totalQuestions={totalQuestions}
@@ -123,7 +123,7 @@ function QuizPage() {
             onNext={handleNext}
           />
           {finished && (
-            <Results 
+            <Results
               score={score}
               totalQuestions={totalQuestions}
               order={order}
@@ -131,10 +131,10 @@ function QuizPage() {
               picks={picks}
             />
           )}
-        </div>
-      </div>
+        </Card>
+      </Container>
 
-      <Navigator 
+      <Navigator
         order={order}
         questions={quizData.questions}
         picks={picks}
@@ -146,3 +146,22 @@ function QuizPage() {
 }
 
 export default QuizPage;
+
+/* ===== styled ===== */
+const Container = styled.div`
+  max-width: 860px;
+  margin: 20px auto;
+  padding: 16px;
+
+  @media (max-width: 980px) {
+    max-width: 720px;
+  }
+`;
+
+const Card = styled.div`
+  background: #111827;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+`;
