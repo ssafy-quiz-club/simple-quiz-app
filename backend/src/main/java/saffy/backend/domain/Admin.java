@@ -1,5 +1,5 @@
 
-package com.example.quiz.domain;
+package saffy.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;

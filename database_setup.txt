@@ -1,0 +1,45 @@
+-- 퀴즈 앱 데이터베이스 셋업 명령어
+
+-- 1. MySQL 접속
+mysql -u root -p
+
+-- 2. 데이터베이스 생성 (UTF-8 한글 지원)
+CREATE DATABASE quiz_app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 3. 데이터베이스 사용
+USE quiz_app_db;
+
+-- 4. 테이블 생성 (schema.sql 내용)
+-- Create admins table
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login DATETIME DEFAULT NULL
+);
+
+-- Create questions table
+CREATE TABLE questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL
+);
+
+-- Create answers table
+CREATE TABLE answers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT NOT NULL,
+    content TEXT NOT NULL,
+    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+);
+
+-- Create explanations table
+CREATE TABLE explanations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT NOT NULL,
+    content TEXT NOT NULL,
+    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+);
+
+-- 5. 테스트 데이터 삽입은 backend/src/main/resources/data.sql 파일 참고
