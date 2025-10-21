@@ -32,7 +32,6 @@ export function Header({ title, currentIndex, totalQuestions, score, onReset, on
     <Wrap>
       <Left>
         <Title>{title}</Title>
-        {/* <Sub>JSON 파일을 직접 import하여 렌더링합니다.</Sub> */}
       </Left>
       <Right>
         <Pill>{currentIndex + 1} / {totalQuestions}</Pill>
@@ -63,10 +62,6 @@ const Right = styled.div`
 const Title = styled.h1`
   margin: 0 0 4px;
   font-size: 24px; line-height: 1.2; letter-spacing: -0.2px;
-`;
-
-const Sub = styled.div`
-  color: #8fa0b3; font-size: 13px;
 `;
 
 const Pill = styled.span`
