@@ -17,7 +17,8 @@ import java.util.Optional;
         "http://localhost:5173",
         "http://localhost:5174",
         "https://zhy2on.github.io",
-        "https://ssafy-quiz-club.github.io"
+        "https://ssafy-quiz-club.github.io",
+        "https://quiz-api.kro.kr"
     },
     allowCredentials = "true"
 )
