@@ -1,4 +1,3 @@
-
 package saffy.backend.entity;
 
 import jakarta.persistence.*;
@@ -23,9 +22,16 @@ public class Question {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    // ✅ Lecture와 다대일 관계 (lecture_id 외래키)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lecture_id", nullable = false)
+    private Lecture lecture;
+
+    // ✅ 하나의 Question → 여러 Answer
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Answer> answers = new ArrayList<>();
 
+    // ✅ 하나의 Question → 여러 Explanation
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Explanation> explanations = new ArrayList<>();
 }
