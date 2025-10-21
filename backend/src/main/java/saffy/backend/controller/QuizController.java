@@ -1,75 +1,47 @@
 package saffy.backend.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import saffy.backend.domain.Question;
-import saffy.backend.domain.Answer;
-import saffy.backend.repository.QuestionRepository;
-import saffy.backend.repository.AnswerRepository;
-
-import java.util.List;
-import java.util.Optional;
+import saffy.backend.dto.LectureDto;
+import saffy.backend.dto.QuestionDto;
+import saffy.backend.service.QuizService;
 
 @RestController
 @CrossOrigin(
-    origins = {
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "https://zhy2on.github.io",
-        "https://ssafy-quiz-club.github.io",
-        "https://quiz-api.kro.kr"
-    },
-    allowCredentials = "true"
+        origins = {
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "https://zhy2on.github.io",
+                "https://ssafy-quiz-club.github.io",
+                "https://quiz-api.kro.kr"
+        },
+        allowCredentials = "true"
 )
+@RequiredArgsConstructor
 public class QuizController {
 
-    @Autowired
-    private QuestionRepository questionRepository;
-
-    @Autowired
-    private AnswerRepository answerRepository;
+    private final QuizService quizService;
 
     @GetMapping("/api/ping")
     public String ping() {
         return "pong";
     }
 
-    @GetMapping("/api/questions")
-    public ResponseEntity<List<Question>> getAllQuestions() {
-        List<Question> questions = questionRepository.findAll();
-        return ResponseEntity.ok(questions);
+    // 강의 목록
+    @GetMapping("/api/lectures")
+    public ResponseEntity<List<LectureDto>> getAllLectures() {
+        return ResponseEntity.ok(quizService.getAllLectures());
     }
 
-    @GetMapping("/api/questions/{id}")
-    public ResponseEntity<Question> getQuestion(@PathVariable Long id) {
-        Optional<Question> question = questionRepository.findById(id);
-        if (question.isPresent()) {
-            return ResponseEntity.ok(question.get());
+    // 강의별 문제(보기/해설 포함)
+    @GetMapping("/api/lectures/{lectureId}/questions")
+    public ResponseEntity<List<QuestionDto>> getQuestionsByLecture(@PathVariable Long lectureId) {
+        try {
+            return ResponseEntity.ok(quizService.getByLectureId(lectureId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PostMapping("/api/questions")
-    public ResponseEntity<Question> createQuestion(@RequestBody Question question) {
-        Question savedQuestion = questionRepository.save(question);
-        return ResponseEntity.ok(savedQuestion);
-    }
-
-    @GetMapping("/api/questions/{id}/answers")
-    public ResponseEntity<List<Answer>> getAnswersForQuestion(@PathVariable Long id) {
-        List<Answer> answers = answerRepository.findByQuestionId(id);
-        return ResponseEntity.ok(answers);
-    }
-
-    @PostMapping("/api/questions/{questionId}/answers")
-    public ResponseEntity<Answer> addAnswerToQuestion(@PathVariable Long questionId, @RequestBody Answer answer) {
-        Optional<Question> question = questionRepository.findById(questionId);
-        if (question.isPresent()) {
-            answer.setQuestion(question.get());
-            Answer savedAnswer = answerRepository.save(answer);
-            return ResponseEntity.ok(savedAnswer);
-        }
-        return ResponseEntity.notFound().build();
     }
 }
