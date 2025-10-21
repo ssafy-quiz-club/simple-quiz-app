@@ -66,8 +66,20 @@ jobs:
           username: ${{ secrets.KT_SERVER_USER }}
           port: ${{ secrets.KT_SSH_PORT }}
           password: ${{ secrets.KT_SERVER_PASSWORD }}
+          envs: DB_HOST,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,BACKEND_PORT,FRONTEND_PORT
           script: |
             cd ~/simple-quiz-app
+
+            # .env 파일 생성
+            cat > .env << EOF
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_PORT=${{ secrets.DB_PORT }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            BACKEND_PORT=${{ secrets.BACKEND_PORT }}
+            FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+            EOF
 
             # Docker 이미지 로드
             docker load < ~/quiz-backend.tar.gz

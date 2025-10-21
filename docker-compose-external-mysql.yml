@@ -8,8 +8,8 @@ services:
       dockerfile: Dockerfile
     container_name: quiz-backend
     environment:
-      DB_HOST: 192.168.0.84  # 외부 MySQL 서버 IP
-      DB_PORT: 3306
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME:-quiz_app_db}
       DB_USERNAME: ${DB_USERNAME:-root}
       DB_PASSWORD: ${DB_PASSWORD:-password}
