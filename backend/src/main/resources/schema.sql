@@ -12,7 +12,9 @@ CREATE TABLE admins (
 -- Create questions table
 CREATE TABLE questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    content TEXT NOT NULL
+    lecture_id INT NOT NULL,
+    content TEXT NOT NULL,
+    FOREIGN KEY (lecture_id) REFERENCES lectures(id) ON DELETE CASCADE
 );
 
 -- Create answers table
@@ -30,4 +32,10 @@ CREATE TABLE explanations (
     question_id INT NOT NULL,
     content TEXT NOT NULL,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+);
+
+-- Create explanations table
+CREATE TABLE lectures (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(30) NOT NULL
 );
