@@ -1,0 +1,74 @@
+package saffy.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import saffy.backend.dto.AnswerDto;
+import saffy.backend.dto.ExplanationDto;
+import saffy.backend.dto.LectureDto;
+import saffy.backend.dto.QuestionDto;
+import saffy.backend.entity.Answer;
+import saffy.backend.entity.Explanation;
+import saffy.backend.entity.Lecture;
+import saffy.backend.entity.Question;
+import saffy.backend.repository.AnswerRepository;
+import saffy.backend.repository.ExplanationRepository;
+import saffy.backend.repository.LectureRepository;
+import saffy.backend.repository.QuestionRepository;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class QuizService {
+
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
+    private final ExplanationRepository explanationRepository;
+    private final LectureRepository lectureRepository;
+
+    /** 강의 전체 목록 조회 */
+    public List<LectureDto> getAllLectures() {
+        return lectureRepository.findAll().stream()
+                .map(this::toLectureDto)
+                .toList();
+    }
+
+    /** 강의별 문제(보기/해설 포함) 조회 */
+    public List<QuestionDto> getByLectureId(Long lectureId) {
+        lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 강의를 찾을 수 없습니다: " + lectureId));
+
+        return questionRepository.findByLecture_Id(lectureId).stream()
+                .map(this::toQuestionDtoWithChildren)
+                .toList();
+    }
+
+    // ====== DTO 매핑 ======
+    private LectureDto toLectureDto(Lecture lec) {
+        return new LectureDto(lec.getId(), lec.getName());
+    }
+
+    private QuestionDto toQuestionDtoWithChildren(Question q) {
+        List<AnswerDto> answers = answerRepository.findByQuestionId(q.getId())
+                .stream()
+                .map(this::toAnswerDto)
+                .toList();
+
+        List<ExplanationDto> exps = explanationRepository.findByQuestionId(q.getId())
+                .stream()
+                .map(this::toExplanationDto)
+                .toList();
+
+        return new QuestionDto(q.getId(), q.getContent(), answers, exps);
+    }
+
+    private AnswerDto toAnswerDto(Answer a) {
+        return new AnswerDto(a.getId(), a.getContent(), a.isCorrect());
+    }
+
+    private ExplanationDto toExplanationDto(Explanation e) {
+        return new ExplanationDto(e.getId(), e.getContent());
+    }
+}
