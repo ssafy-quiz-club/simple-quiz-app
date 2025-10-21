@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # MySQL 데이터베이스
+  mysql:
+    image: mysql:8.0
+    container_name: quiz-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_DATABASE: ${DB_NAME:-quiz_app_db}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    # ports:
+    #   - "3306:3306"  # 외부 접근 차단 (컨테이너끼리만 통신)
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database_setup.txt:/docker-entrypoint-initdb.d/init.txt:ro
+    networks:
+      - quiz-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot 백엔드
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quiz-backend
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-quiz_app_db}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - quiz-network
+    restart: unless-stopped
+
+  # React 프론트엔드 (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quiz-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - quiz-network
+    restart: unless-stopped
+
+networks:
+  quiz-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local

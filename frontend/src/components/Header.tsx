@@ -1,4 +1,6 @@
 import styled from 'styled-components';
+import { pingServer } from '../services/quizService';
+import { useState } from 'react';
 
 interface HeaderProps {
   title: string;
@@ -10,6 +12,22 @@ interface HeaderProps {
 }
 
 export function Header({ title, currentIndex, totalQuestions, score, onReset, onShuffle }: HeaderProps) {
+  const [pingStatus, setPingStatus] = useState<string>('');
+
+  const handlePing = async () => {
+    setPingStatus('테스트 중...');
+    try {
+      const response = await pingServer();
+      setPingStatus(`✅ ${response}`);
+      console.log('Ping 성공:', response);
+      setTimeout(() => setPingStatus(''), 3000);
+    } catch (error) {
+      setPingStatus('❌ 실패');
+      console.error('Ping 실패:', error);
+      setTimeout(() => setPingStatus(''), 3000);
+    }
+  };
+
   return (
     <Wrap>
       <Left>
@@ -19,6 +37,9 @@ export function Header({ title, currentIndex, totalQuestions, score, onReset, on
       <Right>
         <Pill>{currentIndex + 1} / {totalQuestions}</Pill>
         <Pill>점수 {score}</Pill>
+        <Btn onClick={handlePing}>
+          서버 연결 테스트 {pingStatus && `(${pingStatus})`}
+        </Btn>
         <Btn onClick={onReset}>초기화</Btn>
         <BtnPrimary onClick={onShuffle}>재섞기</BtnPrimary>
       </Right>

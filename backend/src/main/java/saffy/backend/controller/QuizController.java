@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(
+    origins = {"http://localhost:5173", "http://localhost:5174", "https://zhy2on.github.io"},
+    allowCredentials = "true"
+)
 public class QuizController {
 
     @Autowired
