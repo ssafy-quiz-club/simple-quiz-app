@@ -1,5 +1,5 @@
 
-package saffy.backend.domain;
+package saffy.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

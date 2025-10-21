@@ -1,7 +1,7 @@
 
 package saffy.backend.repository;
 
-import saffy.backend.domain.Question;
+import saffy.backend.entity.Question;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
