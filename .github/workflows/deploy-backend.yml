@@ -28,44 +28,62 @@ jobs:
         run: docker save quiz-backend:latest | gzip > quiz-backend.tar.gz
 
       - name: Copy Docker Image to Server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.KT_SERVER_HOST }}
           username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT }}
+          port: ${{ secrets.KT_SSH_PORT || 22 }}
           password: ${{ secrets.KT_SERVER_PASSWORD }}
           source: "quiz-backend.tar.gz"
           target: "~/"
+          timeout: 300s
+          command_timeout: 30m
 
       - name: Copy backend source to Server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.KT_SERVER_HOST }}
           username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT }}
+          port: ${{ secrets.KT_SSH_PORT || 22 }}
           password: ${{ secrets.KT_SERVER_PASSWORD }}
           source: "backend/**"
           target: "~/simple-quiz-app/"
           strip_components: 0
+          timeout: 300s
 
       - name: Copy docker-compose file to Server
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.KT_SERVER_HOST }}
           username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT }}
+          port: ${{ secrets.KT_SSH_PORT || 22 }}
           password: ${{ secrets.KT_SERVER_PASSWORD }}
           source: "docker-compose-external-mysql.yml"
           target: "~/simple-quiz-app/"
           strip_components: 0
+          timeout: 300s
 
-      - name: Deploy on KT Cloud Server
-        uses: appleboy/ssh-action@master
+      - name: Copy nginx directory to Server
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.KT_SERVER_HOST }}
           username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT }}
+          port: ${{ secrets.KT_SSH_PORT || 22 }}
           password: ${{ secrets.KT_SERVER_PASSWORD }}
+          source: "nginx/**"
+          target: "~/simple-quiz-app/"
+          strip_components: 0
+          timeout: 300s
+
+      - name: Deploy on KT Cloud Server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.KT_SERVER_HOST }}
+          username: ${{ secrets.KT_SERVER_USER }}
+          port: ${{ secrets.KT_SSH_PORT || 22 }}
+          password: ${{ secrets.KT_SERVER_PASSWORD }}
+          timeout: 300s
+          command_timeout: 30m
           envs: DB_HOST,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,BACKEND_PORT,FRONTEND_PORT
           script: |
             cd ~/simple-quiz-app
@@ -85,16 +103,16 @@ jobs:
             docker load < ~/quiz-backend.tar.gz
             rm ~/quiz-backend.tar.gz
 
-            # 백엔드 컨테이너 재시작
-            docker compose -f docker-compose-external-mysql.yml stop backend
-            docker compose -f docker-compose-external-mysql.yml rm -f backend
-            docker compose -f docker-compose-external-mysql.yml up -d backend
+            # 백엔드 및 nginx 컨테이너 재시작
+            docker compose -f docker-compose-external-mysql.yml down backend nginx
+            docker compose -f docker-compose-external-mysql.yml up -d backend nginx
 
             # 잠시 대기
             sleep 10
 
             # 로그 확인
             docker compose -f docker-compose-external-mysql.yml logs --tail=50 backend
+            docker compose -f docker-compose-external-mysql.yml logs --tail=20 nginx
 
             # 상태 확인
-            docker ps | grep quiz-backend
+            docker ps | grep -E 'quiz-backend|quiz-nginx'
