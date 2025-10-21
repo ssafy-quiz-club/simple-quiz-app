@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Spring Boot 백엔드 (외부 MySQL 사용)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quiz-backend
+    environment:
+      DB_HOST: 192.168.0.84  # 외부 MySQL 서버 IP
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-quiz_app_db}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "8080:8080"
+    networks:
+      - quiz-network
+    restart: unless-stopped
+
+  # React 프론트엔드 (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quiz-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - quiz-network
+    restart: unless-stopped
+
+networks:
+  quiz-network:
+    driver: bridge
