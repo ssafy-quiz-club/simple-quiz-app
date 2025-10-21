@@ -13,7 +13,12 @@ import java.util.Optional;
 
 @RestController
 @CrossOrigin(
-    origins = {"http://localhost:5173", "http://localhost:5174", "https://zhy2on.github.io"},
+    origins = {
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://zhy2on.github.io",
+        "https://ssafy-quiz-club.github.io"
+    },
     allowCredentials = "true"
 )
 public class QuizController {
