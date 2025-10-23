@@ -10,8 +10,8 @@ services:
       MYSQL_DATABASE: ${DB_NAME:-quiz_app_db}
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
-    # ports:
-    #   - "3306:3306"  # 외부 접근 차단 (컨테이너끼리만 통신)
+    ports:
+      - "127.0.0.1:3306:3306"  # 외부 접근 차단 (컨테이너끼리만 통신)
     volumes:
       - mysql-data:/var/lib/mysql
       - ./database_setup.txt:/docker-entrypoint-initdb.d/init.txt:ro
@@ -60,19 +60,19 @@ services:
       - quiz-network
     restart: unless-stopped
 
-  # React 프론트엔드 (Nginx)
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: quiz-frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - quiz-network
-    restart: unless-stopped
+  # # React 프론트엔드 (Nginx)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: quiz-frontend
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - quiz-network
+  #   restart: unless-stopped
 
 networks:
   quiz-network:
