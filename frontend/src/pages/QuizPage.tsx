@@ -53,7 +53,8 @@ function QuizPage() {
   // ===== 퀴즈 진행 상태 =====
   const [order, setOrder] = useState<number[]>([]);
   const [index, setIndex] = useState(0);
-  const [picks, setPicks] = useState<Record<string | number, number>>({});
+  type PickMap = Record<string, number>;
+  const [picks, setPicks] = useState<PickMap>({});
   const [finished, setFinished] = useState(false);
 
   // ===== 강의 / 문제 API 상태 =====
@@ -69,6 +70,8 @@ function QuizPage() {
 
   // 현재 사용하는 데이터 소스
   const data: UiQuizData = dynData ?? fallbackData;
+
+  const keyOf = (id: string | number) => String(id);
 
   // ===== 최초 로드: 진행 상태/순서 복구 + 강의 목록 불러오기 =====
   useEffect(() => {
@@ -179,9 +182,9 @@ function QuizPage() {
 
   // ===== 점수/현재문항 =====
   const score = useMemo(() => {
-    return order.reduce((acc, qIdx) => {
+  return order.reduce((acc, qIdx) => {
       const q = data.questions[qIdx];
-      return acc + (picks[q.id] === q.answer ? 1 : 0);
+      return acc + ((picks[keyOf(q.id)] ?? -1) === q.answer ? 1 : 0);
     }, 0);
   }, [picks, order, data]);
 
@@ -189,8 +192,8 @@ function QuizPage() {
   const totalQuestions = data.questions.length;
 
   const handleChoiceClick = (choiceIndex: number) => {
-    if (!currentQ || picks[currentQ.id] !== undefined) return;
-    setPicks(prev => ({ ...prev, [currentQ.id]: choiceIndex }));
+    if (!currentQ || picks[keyOf(currentQ.id)] !== undefined) return;
+    setPicks(prev => ({ ...prev, [keyOf(currentQ.id)]: choiceIndex }));
   };
 
   const handleNext = () => {
