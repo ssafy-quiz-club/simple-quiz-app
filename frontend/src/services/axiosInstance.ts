@@ -9,7 +9,7 @@ const getCookie = (name: string): string | null => {
 };
 
 const axiosInstance = axios.create({
-    baseURL: "https://quiz-api.kro.kr/api",  // HTTPS 백엔드 서버
+    baseURL: "/api",  // HTTPS 백엔드 서버
     withCredentials: true, // ✅ 이거 있어야 쿠키 보내짐!
 });
 
