@@ -6,7 +6,7 @@ on:
     paths:
       - 'backend/**'
       - 'nginx/**'
-      - 'docker-compose-external-mysql.yml'
+      - 'docker-compose.yml'
       - '.github/workflows/deploy-backend.yml'
 
 jobs:
@@ -74,10 +74,10 @@ jobs:
 
             # ----- 서비스 재배포 -----
             # 변경된 파일(backend, nginx, compose)을 바탕으로 서버에서 직접 빌드/재기동
-            docker compose -f docker-compose-external-mysql.yml down backend nginx || true
-            docker compose -f docker-compose-external-mysql.yml up -d --build backend nginx
+            docker compose -f docker-compose.yml down backend nginx || true
+            docker compose -f docker-compose.yml up -d --build backend nginx
 
             # 안정화 대기 & 로그
             sleep 10
-            docker compose -f docker-compose-external-mysql.yml logs --tail=80 backend
-            docker compose -f docker-compose-external-mysql.yml ps
+            docker compose -f docker-compose.yml logs --tail=80 backend
+            docker compose -f docker-compose.yml ps
