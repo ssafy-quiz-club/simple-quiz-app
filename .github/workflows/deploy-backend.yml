@@ -1,81 +1,21 @@
-name: Deploy Backend to KT Cloud
+name: Deploy Backend to KT Cloud (git-pull)
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'backend/**'
+      - 'nginx/**'
       - 'docker-compose-external-mysql.yml'
       - '.github/workflows/deploy-backend.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    environment:
+      name: backend
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Backend Docker Image
-        working-directory: ./backend
-        run: docker build -t quiz-backend:latest .
-
-      - name: Save Docker Image
-        run: docker save quiz-backend:latest | gzip > quiz-backend.tar.gz
-
-      - name: Copy Docker Image to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.KT_SERVER_HOST }}
-          username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT || 22 }}
-          password: ${{ secrets.KT_SERVER_PASSWORD }}
-          source: "quiz-backend.tar.gz"
-          target: "~/"
-          timeout: 300s
-          command_timeout: 30m
-
-      - name: Copy backend source to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.KT_SERVER_HOST }}
-          username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT || 22 }}
-          password: ${{ secrets.KT_SERVER_PASSWORD }}
-          source: "backend/**"
-          target: "~/simple-quiz-app/"
-          strip_components: 0
-          timeout: 300s
-
-      - name: Copy docker-compose file to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.KT_SERVER_HOST }}
-          username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT || 22 }}
-          password: ${{ secrets.KT_SERVER_PASSWORD }}
-          source: "docker-compose-external-mysql.yml"
-          target: "~/simple-quiz-app/"
-          strip_components: 0
-          timeout: 300s
-
-      - name: Copy nginx directory to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.KT_SERVER_HOST }}
-          username: ${{ secrets.KT_SERVER_USER }}
-          port: ${{ secrets.KT_SSH_PORT || 22 }}
-          password: ${{ secrets.KT_SERVER_PASSWORD }}
-          source: "nginx/**"
-          target: "~/simple-quiz-app/"
-          strip_components: 0
-          timeout: 300s
-
-      - name: Deploy on KT Cloud Server
+      - name: Deploy on KT Cloud via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.KT_SERVER_HOST }}
@@ -84,12 +24,45 @@ jobs:
           password: ${{ secrets.KT_SERVER_PASSWORD }}
           timeout: 300s
           command_timeout: 30m
-          envs: DB_HOST,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,BACKEND_PORT,FRONTEND_PORT
+          envs: DB_HOST,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,BACKEND_PORT,FRONTEND_PORT,REPO_URL,APP_DIR
           script: |
-            cd ~/simple-quiz-app
+            # ----- 설정 -----
+            export REPO_URL="${{ secrets.REPO_URL }}"   # 예: git@github.com:org/repo.git
+            export APP_DIR="$HOME/simple-quiz-app"
 
-            # .env 파일 생성
-            cat > .env << EOF
+            # 필수 도구 확인 (git, docker, docker compose plugin)
+            if ! command -v git >/dev/null 2>&1; then
+              echo "git이 필요합니다. 서버에 git을 설치해주세요." >&2
+              exit 1
+            fi
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "docker가 필요합니다. 서버에 docker를 설치해주세요." >&2
+              exit 1
+            fi
+            if ! docker compose version >/dev/null 2>&1; then
+              echo "docker compose v2 플러그인이 필요합니다." >&2
+              exit 1
+            fi
+
+            # ----- 레포 준비 (최초 1회 clone, 이후 pull) -----
+            if [ ! -d "$APP_DIR/.git" ]; then
+              mkdir -p "$APP_DIR"
+              git clone --depth=1 "$REPO_URL" "$APP_DIR"
+            else
+              cd "$APP_DIR"
+              # 안전하게 최신 상태로 맞춤 (로컬 변경 사항 버림)
+              git fetch --all --prune
+              git reset --hard origin/main
+              git clean -fd
+            fi
+
+            cd "$APP_DIR"
+
+            # (서브모듈 쓰면 주석 해제)
+            # git submodule update --init --recursive
+
+            # ----- .env 갱신 -----
+            cat > .env << 'EOF'
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=${{ secrets.DB_PORT }}
             DB_NAME=${{ secrets.DB_NAME }}
@@ -99,20 +72,12 @@ jobs:
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
             EOF
 
-            # Docker 이미지 로드
-            docker load < ~/quiz-backend.tar.gz
-            rm ~/quiz-backend.tar.gz
+            # ----- 서비스 재배포 -----
+            # 변경된 파일(backend, nginx, compose)을 바탕으로 서버에서 직접 빌드/재기동
+            docker compose -f docker-compose-external-mysql.yml down backend nginx || true
+            docker compose -f docker-compose-external-mysql.yml up -d --build backend nginx
 
-            # 백엔드 및 nginx 컨테이너 재시작
-            docker compose -f docker-compose-external-mysql.yml down backend nginx
-            docker compose -f docker-compose-external-mysql.yml up -d backend nginx
-
-            # 잠시 대기
+            # 안정화 대기 & 로그
             sleep 10
-
-            # 로그 확인
-            docker compose -f docker-compose-external-mysql.yml logs --tail=50 backend
-            docker compose -f docker-compose-external-mysql.yml logs --tail=20 nginx
-
-            # 상태 확인
-            docker ps | grep -E 'quiz-backend|quiz-nginx'
+            docker compose -f docker-compose-external-mysql.yml logs --tail=80 backend
+            docker compose -f docker-compose-external-mysql.yml ps
