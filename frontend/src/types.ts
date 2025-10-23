@@ -17,8 +17,3 @@ export interface QuizData {
   meta: QuizMeta;
   questions: Question[];
 }
-
-export interface Lecture {
-  id: number;
-  name: string;
-}
