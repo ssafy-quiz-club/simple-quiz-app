@@ -247,14 +247,22 @@ function QuizPage() {
           <label htmlFor="lecture-select">강의</label>
           <select
             id="lecture-select"
-            value={selectedLectureId ?? ''}
-            onChange={handleLectureChange}
-            disabled={loadingLectures || loadingQuestions}
+            value={selectedLectureId != null ? String(selectedLectureId) : ""}  // 🔁 문자열로
+            onChange={(e) => {
+              const v = e.target.value;                      // 🔁 문자열
+              const next = v === "" ? null : Number(v);      // "" → null, 그 외 숫자 변환
+              setSelectedLectureId(next);
+              if (next != null) localStorage.setItem(STORAGE_LECTURE, String(next));
+              else localStorage.removeItem(STORAGE_LECTURE);
+            }}
+            disabled={loadingLectures}  // ✅ 질문 로딩과 무관하게 선택 가능
           >
-            {loadingLectures && <option value="">불러오는 중…</option>}
-            {!loadingLectures && !lectures.length && <option value="">강의 없음</option>}
-            {!loadingLectures && lectures.map(l => (
-              <option key={l.id} value={l.id}>{l.name}</option>
+            {/* 선택 안내용 placeholder */}
+            <option value="" disabled hidden>강의 선택</option>
+            {lectures.map((l) => (
+              <option key={l.id} value={String(l.id)}> {/* 🔁 문자열로 */}
+                {l.name}
+              </option>
             ))}
           </select>
           {(errorLectures || errorQuestions) && (
