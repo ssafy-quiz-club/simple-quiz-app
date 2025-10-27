@@ -16,6 +16,8 @@ export function QuestionCard({
   onChoiceClick, onPrev, onNext
 }: QuestionCardProps) {
   const percent = (currentIndex / (totalQuestions - 1)) * 100;
+  const isAnswered = picked !== undefined;
+  const isCorrect = isAnswered && picked === question.answer;
 
   return (
     <>
@@ -27,18 +29,18 @@ export function QuestionCard({
 
       <Choices>
         {question.choices.map((choice, i) => {
-          const isCorrect = i === question.answer;
-          const isPicked = i === picked;
+          const isThisCorrect = i === question.answer;
+          const isThisPicked = i === picked;
           const state: 'correct' | 'wrong' | 'default' =
-            picked !== undefined ? (isCorrect ? 'correct' : isPicked ? 'wrong' : 'default') : 'default';
+            isAnswered ? (isThisCorrect ? 'correct' : isThisPicked ? 'wrong' : 'default') : 'default';
 
           return (
             <ChoiceBtn
-              key={i}
+              key={`${question.id}-${i}-${choice.slice(0,12)}`}
               $state={state}
               onClick={() => onChoiceClick(i)}
-              disabled={picked !== undefined}
-              aria-pressed={isPicked}
+              disabled={isAnswered}
+              aria-pressed={isThisPicked}
             >
               <Keycap>{'ABCD'[i]}</Keycap>
               <span>{choice}</span>
@@ -47,9 +49,26 @@ export function QuestionCard({
         })}
       </Choices>
 
+      {/* ✅ 선택 직후 결과/해설 표시 */}
+      {isAnswered && (
+        <Explain $ok={!!isCorrect} role="status" aria-live="polite">
+          <ExplainHeader>
+            <ExplainBadge $ok={!!isCorrect}>
+              {isCorrect ? '정답!' : '오답'}
+            </ExplainBadge>
+            <Small>
+              정답: <b>{'ABCD'[question.answer]}</b> — {question.choices[question.answer]}
+            </Small>
+          </ExplainHeader>
+          {question.explanation && (
+            <ExpText>{question.explanation}</ExpText>
+          )}
+        </Explain>
+      )}
+
       <Footer>
         <Btn onClick={onPrev} disabled={currentIndex === 0}>이전</Btn>
-        <BtnPrimary onClick={onNext} disabled={picked === undefined}>
+        <BtnPrimary onClick={onNext} disabled={!isAnswered}>
           {currentIndex === totalQuestions - 1 ? '결과보기' : '다음'}
         </BtnPrimary>
       </Footer>
@@ -127,4 +146,34 @@ const Btn = styled.button`
 const BtnPrimary = styled(Btn)`
   background: linear-gradient(180deg, #2a6df3, #2057c9);
   border-color: #1f4fb8;
+`;
+
+const Explain = styled.div<{ $ok: boolean }>`
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid ${({ $ok }) => ($ok ? '#14532d' : '#7f1d1d')};
+  background: ${({ $ok }) => ($ok ? '#0b2d19' : '#2a0f0f')};
+  color: #e8edf3;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+`;
+
+const ExplainHeader = styled.div`
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+`;
+
+const ExplainBadge = styled.span<{ $ok: boolean }>`
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 48px; height: 28px; padding: 0 10px; font-weight: 700; font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid ${({ $ok }) => ($ok ? '#166534' : '#991b1b')};
+  background: ${({ $ok }) => ($ok ? '#065f46' : '#7f1d1d')};
+`;
+
+const Small = styled.span`
+  font-size: 12px; color: #cbd5e1;
+`;
+
+const ExpText = styled.p`
+  margin: 6px 0 0; line-height: 1.6; color: #e5e7eb;
 `;

@@ -32,20 +32,20 @@ const fallbackData: UiQuizData = {
 
 function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
   return questions.map((q) => {
-    // 보기 텍스트 추출: content 또는 text 중 존재하는 필드를 사용
     const choices = (q.answers ?? []).map(a => (a.content ?? a.text ?? '').toString());
+    const answerIndex = Math.max(0, (q.answers ?? []).findIndex(a => a.correct === true));
 
-    // 정답 인덱스: correct === true인 첫 번째 보기의 index, 없으면 0
-    const answerIndex = Math.max(
-      0,
-      (q.answers ?? []).findIndex(a => a.correct === true)
-    );
+    const explanation =
+      q.explanations?.[0]?.content ??
+      q.explanations?.[0]?.text ??
+      undefined;
 
     return {
       id: q.id,
       prompt: q.content,
       choices,
       answer: answerIndex === -1 ? 0 : answerIndex,
+      explanation, // ✅ 추가
     };
   });
 }
@@ -247,14 +247,22 @@ function QuizPage() {
           <label htmlFor="lecture-select">강의</label>
           <select
             id="lecture-select"
-            value={selectedLectureId ?? ''}
-            onChange={handleLectureChange}
-            disabled={loadingLectures || loadingQuestions}
+            value={selectedLectureId != null ? String(selectedLectureId) : ""}  // 🔁 문자열로
+            onChange={(e) => {
+              const v = e.target.value;                      // 🔁 문자열
+              const next = v === "" ? null : Number(v);      // "" → null, 그 외 숫자 변환
+              setSelectedLectureId(next);
+              if (next != null) localStorage.setItem(STORAGE_LECTURE, String(next));
+              else localStorage.removeItem(STORAGE_LECTURE);
+            }}
+            disabled={loadingLectures}  // ✅ 질문 로딩과 무관하게 선택 가능
           >
-            {loadingLectures && <option value="">불러오는 중…</option>}
-            {!loadingLectures && !lectures.length && <option value="">강의 없음</option>}
-            {!loadingLectures && lectures.map(l => (
-              <option key={l.id} value={l.id}>{l.name}</option>
+            {/* 선택 안내용 placeholder */}
+            <option value="" disabled hidden>강의 선택</option>
+            {lectures.map((l) => (
+              <option key={l.id} value={String(l.id)}> {/* 🔁 문자열로 */}
+                {l.name}
+              </option>
             ))}
           </select>
           {(errorLectures || errorQuestions) && (
@@ -278,19 +286,17 @@ function QuizPage() {
 
           <ContentCard as="section" aria-label="퀴즈 본문">
             <QuestionCard
-              // QuestionCard는 기존 구조를 그대로 사용
-              // prompt/choices/answer를 가진 currentQ를 넘김
               question={{
                 id: currentQ.id,
-                // 컴포넌트에 따라 prop명이 다르면 내부에서 맞춰주세요.
                 question: (currentQ as any).question ?? currentQ.prompt,
                 prompt: currentQ.prompt,
                 choices: currentQ.choices,
                 answer: currentQ.answer,
+                explanation: (currentQ as any).explanation, // ✅ 전달
               }}
               currentIndex={index}
               totalQuestions={totalQuestions}
-              picked={picks[currentQ.id]}
+              picked={picks[keyOf(currentQ.id)]}          // ← 키 일관성
               onChoiceClick={handleChoiceClick}
               onPrev={handlePrev}
               onNext={handleNext}
@@ -354,6 +360,7 @@ const LectureBar = styled.div`
     border: 1px solid #334155;
     border-radius: 10px;
     padding: 8px 10px;
+    font-size: 16px;
   }
 `;
 const ErrorText = styled.span`

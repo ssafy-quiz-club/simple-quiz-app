@@ -51,6 +51,7 @@ export interface UiQuestion {
   prompt: string;        // = content
   choices: string[];     // 보기 텍스트 배열
   answer: number;        // 정답 choice index
+  explanation?: string;
   // 필요하면 해설 등 추가 가능
 }
 
