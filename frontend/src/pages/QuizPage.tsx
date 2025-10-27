@@ -11,6 +11,7 @@ import { Results } from '../components/Results';
 
 import { getLectures } from '../services/lectureService';
 import { getQuestionsByLecture } from '../services/questionService';
+import { fyShuffle, shuffleChoicesForUiQuestion } from '../utils/shuffle';
 
 const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -141,31 +142,37 @@ function QuizPage() {
         const qs = await getQuestionsByLecture(selectedLectureId);
         if (!mounted) return;
 
+        // 1) API → UI 매핑
         const uiQs = mapApiQuestionsToUi(qs);
+
+        // 2) 보기(choices) 먼저 셔플 + 정답 인덱스 보정
+        const shuffledUiQs = uiQs.map(shuffleChoicesForUiQuestion);
+
+        // 3) dynData 세팅
         const nextData: UiQuizData = {
           meta: {
-            title:
-              `강의: ${
-                lectures.find(l => l.id === selectedLectureId)?.name ?? selectedLectureId
-              }`,
+            title: `강의: ${lectures.find(l => l.id === selectedLectureId)?.name ?? selectedLectureId}`,
           },
-          questions: uiQs,
+          questions: shuffledUiQs,
         };
-
         setDynData(nextData);
 
-        // 진행 상태 초기화 (강의 전환 시)
-        const nextOrder = shuffle([...Array(nextData.questions.length).keys()]);
+        // 4) 문항 순서(order) 셔플
+        const nextOrder = fyShuffle([...Array(nextData.questions.length).keys()]);
         setOrder(nextOrder);
         setIndex(0);
         setPicks({});
         setFinished(false);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!mounted) return;
-        setErrorQuestions(err?.message || '문제를 불러오지 못했습니다.');
-        // 실패 시 이전 데이터는 유지 (fallbackData 또는 직전 dynData)
+
+        if (err instanceof Error) {
+          setErrorLectures(err.message);
+        } else {
+          setErrorLectures('강의 목록을 불러오지 못했습니다.');
+        }
       } finally {
-        if (mounted) setLoadingQuestions(false);
+        if (mounted) setLoadingLectures(false);
       }
     })();
 
@@ -182,7 +189,7 @@ function QuizPage() {
 
   // ===== 점수/현재문항 =====
   const score = useMemo(() => {
-  return order.reduce((acc, qIdx) => {
+    return order.reduce((acc, qIdx) => {
       const q = data.questions[qIdx];
       return acc + ((picks[keyOf(q.id)] ?? -1) === q.answer ? 1 : 0);
     }, 0);
@@ -267,7 +274,7 @@ function QuizPage() {
 
       <Main>
         <Article aria-labelledby="quiz-article-title">
-          <h2 id="quiz-article-title" style={{ position:'absolute', left:-9999, top:'auto' }}>퀴즈</h2>
+          <h2 id="quiz-article-title" style={{ position: 'absolute', left: -9999, top: 'auto' }}>퀴즈</h2>
 
           <ContentCard as="section" aria-label="퀴즈 본문">
             <QuestionCard
