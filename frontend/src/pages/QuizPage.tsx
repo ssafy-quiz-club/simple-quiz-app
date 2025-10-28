@@ -239,27 +239,33 @@ function QuizPage() {
   };
 
   // ===== 로딩/에러 UI =====
-  if (loadingLectures || loadingQuestions || !currentQ) {
+  if (loadingLectures || loadingQuestions) {
     return (
       <Page>
         <Main>
           <ContentCard>
-            {(loadingLectures || loadingQuestions) && (
-              <LoadingSpinner
-                message={
-                  loadingLectures
-                    ? '강의 목록을 불러오는 중...'
-                    : '문제를 불러오는 중...'
-                }
-              />
-            )}
-            {!loadingLectures && !loadingQuestions && !currentQ && (
-              <>
-                <h1>퀴즈를 불러올 수 없습니다</h1>
-                {errorLectures && <ErrorText>{errorLectures}</ErrorText>}
-                {errorQuestions && <ErrorText>{errorQuestions}</ErrorText>}
-              </>
-            )}
+            <LoadingSpinner
+              message={
+                loadingLectures
+                  ? '강의 목록을 불러오는 중...'
+                  : '문제를 불러오는 중...'
+              }
+            />
+          </ContentCard>
+          <Sidebar aria-hidden />
+        </Main>
+      </Page>
+    );
+  }
+
+  if (!currentQ) {
+    return (
+      <Page>
+        <Main>
+          <ContentCard>
+            <h1>퀴즈를 불러올 수 없습니다</h1>
+            {errorLectures && <ErrorText>{errorLectures}</ErrorText>}
+            {errorQuestions && <ErrorText>{errorQuestions}</ErrorText>}
           </ContentCard>
           <Sidebar aria-hidden />
         </Main>
