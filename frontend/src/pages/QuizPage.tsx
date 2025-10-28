@@ -8,6 +8,7 @@ import { Header } from '../components/Header';
 import { Navigator } from '../components/Navigator';
 import { QuestionCard } from '../components/QuestionCard';
 import { Results } from '../components/Results';
+import { UploadModal } from '../components/UploadModal';
 
 import { getLectures } from '../services/lectureService';
 import { getQuestionsByLecture } from '../services/questionService';
@@ -68,6 +69,9 @@ function QuizPage() {
 
   // 동적으로 채운 퀴즈 데이터 (없으면 fallback 사용)
   const [dynData, setDynData] = useState<UiQuizData | null>(null);
+
+  // ===== 업로드 모달 상태 =====
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // 현재 사용하는 데이터 소스
   const data: UiQuizData = dynData ?? fallbackData;
@@ -148,16 +152,21 @@ function QuizPage() {
         // 2) 보기(choices) 먼저 셔플 + 정답 인덱스 보정
         const shuffledUiQs = uiQs.map(shuffleChoicesForUiQuestion);
 
-        // 3) dynData 세팅
+        // 3) 랜덤 30개 선택 (문제가 30개보다 많으면)
+        const selectedQuestions = shuffledUiQs.length > 30
+          ? fyShuffle([...shuffledUiQs]).slice(0, 30)
+          : shuffledUiQs;
+
+        // 4) dynData 세팅
         const nextData: UiQuizData = {
           meta: {
             title: `강의: ${lectures.find(l => l.id === selectedLectureId)?.name ?? selectedLectureId}`,
           },
-          questions: shuffledUiQs,
+          questions: selectedQuestions,
         };
         setDynData(nextData);
 
-        // 4) 문항 순서(order) 셔플
+        // 5) 문항 순서(order) 셔플
         const nextOrder = fyShuffle([...Array(nextData.questions.length).keys()]);
         setOrder(nextOrder);
         setIndex(0);
@@ -221,6 +230,13 @@ function QuizPage() {
     setOrder(shuffle([...Array(totalQuestions).keys()])); setPicks({}); setIndex(0); setFinished(false);
   };
 
+  const handleUploadSuccess = () => {
+    // 업로드 성공 후 현재 강의 문제 다시 로드
+    if (selectedLectureId != null) {
+      setSelectedLectureId(selectedLectureId); // useEffect 트리거
+    }
+  };
+
   // ===== 로딩/에러 UI =====
   if (!currentQ) {
     return (
@@ -277,6 +293,7 @@ function QuizPage() {
           score={score}
           onReset={handleReset}
           onShuffle={handleShuffle}
+          onUpload={() => setShowUploadModal(true)}
         />
       </TopHeader>
 
@@ -328,6 +345,14 @@ function QuizPage() {
           </Sticky>
         </Sidebar>
       </Main>
+
+      {showUploadModal && (
+        <UploadModal
+          lectures={lectures}
+          onClose={() => setShowUploadModal(false)}
+          onSuccess={handleUploadSuccess}
+        />
+      )}
     </Page>
   );
 }

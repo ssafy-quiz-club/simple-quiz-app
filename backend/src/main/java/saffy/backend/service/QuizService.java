@@ -7,6 +7,7 @@ import saffy.backend.dto.AnswerDto;
 import saffy.backend.dto.ExplanationDto;
 import saffy.backend.dto.LectureDto;
 import saffy.backend.dto.QuestionDto;
+import saffy.backend.dto.UploadQuestionDto;
 import saffy.backend.entity.Answer;
 import saffy.backend.entity.Explanation;
 import saffy.backend.entity.Lecture;
@@ -70,5 +71,44 @@ public class QuizService {
 
     private ExplanationDto toExplanationDto(Explanation e) {
         return new ExplanationDto(e.getId(), e.getContent());
+    }
+
+    /**
+     * JSON 데이터 업로드
+     * 여러 문제를 한 번에 추가할 수 있음
+     */
+    @Transactional
+    public void uploadQuestions(UploadQuestionDto dto) {
+        // 1. 강의 확인
+        Lecture lecture = lectureRepository.findById(dto.getLectureId())
+                .orElseThrow(() -> new IllegalArgumentException("강의 ID " + dto.getLectureId() + "를 찾을 수 없습니다."));
+
+        // 2. 각 문제 저장
+        for (UploadQuestionDto.QuestionItem item : dto.getQuestions()) {
+            // Question 생성
+            Question question = new Question();
+            question.setContent(item.getContent());
+            question.setLecture(lecture);
+            questionRepository.save(question);
+
+            // Answer 생성 (보기들)
+            if (item.getChoices() != null) {
+                for (int i = 0; i < item.getChoices().size(); i++) {
+                    Answer answer = new Answer();
+                    answer.setContent(item.getChoices().get(i));
+                    answer.setCorrect(i == item.getAnswerIndex()); // 정답 여부
+                    answer.setQuestion(question);
+                    answerRepository.save(answer);
+                }
+            }
+
+            // Explanation 생성 (선택)
+            if (item.getExplanation() != null && !item.getExplanation().isEmpty()) {
+                Explanation explanation = new Explanation();
+                explanation.setContent(item.getExplanation());
+                explanation.setQuestion(question);
+                explanationRepository.save(explanation);
+            }
+        }
     }
 }

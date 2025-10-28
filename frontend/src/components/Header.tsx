@@ -9,9 +9,10 @@ interface HeaderProps {
   score: number;
   onReset: () => void;
   onShuffle: () => void;
+  onUpload: () => void;
 }
 
-export function Header({ title, currentIndex, totalQuestions, score, onReset, onShuffle }: HeaderProps) {
+export function Header({ title, currentIndex, totalQuestions, score, onReset, onShuffle, onUpload }: HeaderProps) {
   const [pingStatus, setPingStatus] = useState<string>('');
 
   const handlePing = async () => {
@@ -39,6 +40,7 @@ export function Header({ title, currentIndex, totalQuestions, score, onReset, on
         <Btn onClick={handlePing}>
           서버 연결 테스트 {pingStatus && `(${pingStatus})`}
         </Btn>
+        <Btn onClick={onUpload}>문제 업로드</Btn>
         <Btn onClick={onReset}>초기화</Btn>
         <BtnPrimary onClick={onShuffle}>재섞기</BtnPrimary>
       </Right>
