@@ -8,6 +8,10 @@ on:
       - 'nginx/**'
       - 'docker-compose.yml'
       - '.github/workflows/deploy-backend.yml'
+  workflow_run:
+    workflows: ["Deploy frontend (Vite) to GitHub Pages (prod)"]
+    types:
+      - completed
 
 jobs:
   deploy:
