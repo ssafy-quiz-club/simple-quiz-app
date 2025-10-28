@@ -111,4 +111,23 @@ public class QuizService {
             }
         }
     }
+
+    /**
+     * 전체 문제 목록 조회 (관리자용)
+     */
+    public List<QuestionDto> getAllQuestions() {
+        return questionRepository.findAll().stream()
+                .map(this::toQuestionDtoWithChildren)
+                .toList();
+    }
+
+    /**
+     * 문제 삭제
+     */
+    @Transactional
+    public void deleteQuestion(Long questionId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new IllegalArgumentException("문제 ID " + questionId + "를 찾을 수 없습니다."));
+        questionRepository.delete(question);
+    }
 }

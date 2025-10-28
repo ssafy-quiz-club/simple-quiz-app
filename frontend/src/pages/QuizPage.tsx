@@ -9,6 +9,7 @@ import { Navigator } from '../components/Navigator';
 import { QuestionCard } from '../components/QuestionCard';
 import { Results } from '../components/Results';
 import { UploadModal } from '../components/UploadModal';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 import { getLectures } from '../services/lectureService';
 import { getQuestionsByLecture } from '../services/questionService';
@@ -238,16 +239,27 @@ function QuizPage() {
   };
 
   // ===== 로딩/에러 UI =====
-  if (!currentQ) {
+  if (loadingLectures || loadingQuestions || !currentQ) {
     return (
       <Page>
         <Main>
           <ContentCard>
-            <h1>퀴즈 로딩 중…</h1>
-            {loadingLectures && <p>강의 목록을 불러오는 중…</p>}
-            {errorLectures && <ErrorText>{errorLectures}</ErrorText>}
-            {loadingQuestions && selectedLectureId != null && <p>문제를 불러오는 중…</p>}
-            {errorQuestions && <ErrorText>{errorQuestions}</ErrorText>}
+            {(loadingLectures || loadingQuestions) && (
+              <LoadingSpinner
+                message={
+                  loadingLectures
+                    ? '강의 목록을 불러오는 중...'
+                    : '문제를 불러오는 중...'
+                }
+              />
+            )}
+            {!loadingLectures && !loadingQuestions && !currentQ && (
+              <>
+                <h1>퀴즈를 불러올 수 없습니다</h1>
+                {errorLectures && <ErrorText>{errorLectures}</ErrorText>}
+                {errorQuestions && <ErrorText>{errorQuestions}</ErrorText>}
+              </>
+            )}
           </ContentCard>
           <Sidebar aria-hidden />
         </Main>
