@@ -177,12 +177,12 @@ function QuizPage() {
         if (!mounted) return;
 
         if (err instanceof Error) {
-          setErrorLectures(err.message);
+          setErrorQuestions(err.message);
         } else {
-          setErrorLectures('강의 목록을 불러오지 못했습니다.');
+          setErrorQuestions('문제를 불러오지 못했습니다.');
         }
       } finally {
-        if (mounted) setLoadingLectures(false);
+        if (mounted) setLoadingQuestions(false);
       }
     })();
 
