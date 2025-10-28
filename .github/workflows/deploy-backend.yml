@@ -24,7 +24,7 @@ jobs:
           password: ${{ secrets.KT_SERVER_PASSWORD }}
           timeout: 300s
           command_timeout: 30m
-          envs: DB_HOST,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,BACKEND_PORT,FRONTEND_PORT,REPO_URL,APP_DIR
+          envs: DB_HOST,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,BACKEND_PORT,FRONTEND_PORT,ADMIN_SECRET,REPO_URL,APP_DIR
           script: |
             # ----- 설정 -----
             export REPO_URL="${{ secrets.REPO_URL }}"   # 예: git@github.com:org/repo.git
@@ -70,6 +70,7 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             BACKEND_PORT=${{ secrets.BACKEND_PORT }}
             FRONTEND_PORT=${{ secrets.FRONTEND_PORT }}
+            ADMIN_SECRET=${{ secrets.ADMIN_SECRET }}
             EOF
 
             # ----- 서비스 재배포 -----
