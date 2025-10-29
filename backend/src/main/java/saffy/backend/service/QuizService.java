@@ -138,10 +138,11 @@ public class QuizService {
      * 강의 추가
      */
     @Transactional
-    public Lecture createLecture(LectureDto lectureDto) {
+    public LectureDto createLecture(LectureDto lectureDto) {
         Lecture newLecture = new Lecture();
         newLecture.setName(lectureDto.getName());
-        return lectureRepository.save(newLecture);
+        Lecture savedLecture = lectureRepository.save(newLecture);
+        return toLectureDto(savedLecture);
     }
 
     /**
