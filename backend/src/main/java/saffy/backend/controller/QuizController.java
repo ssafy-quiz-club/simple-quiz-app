@@ -114,8 +114,8 @@ public class QuizController {
         }
 
         try {
-            Lecture createdLecture = quizService.createLecture(lectureDto);
-            return ResponseEntity.ok(createdLecture);
+            LectureDto createdLectureDto = quizService.createLecture(lectureDto);
+            return ResponseEntity.ok(createdLectureDto);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("강의 생성 중 오류 발생: " + e.getMessage());
         }
