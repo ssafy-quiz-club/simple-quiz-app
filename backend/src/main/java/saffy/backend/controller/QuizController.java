@@ -2,6 +2,7 @@ package saffy.backend.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import saffy.backend.dto.LectureDto;
@@ -53,7 +54,7 @@ public class QuizController {
             quizService.uploadQuestions(dto);
             return ResponseEntity.ok("문제가 성공적으로 추가되었습니다.");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("업로드 중 오류가 발생했습니다: " + e.getMessage());
         }
@@ -69,7 +70,7 @@ public class QuizController {
         if (adminSecret.equals(password)) {
             return ResponseEntity.ok("인증 성공");
         } else {
-            return ResponseEntity.status(401).body("비밀번호가 일치하지 않습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 일치하지 않습니다.");
         }
     }
 
@@ -78,7 +79,7 @@ public class QuizController {
     public ResponseEntity<List<QuestionDto>> getAllQuestions(@RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
         String adminSecret = System.getenv().getOrDefault("ADMIN_SECRET", "admin1234");
         if (!adminSecret.equals(secret)) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(quizService.getAllQuestions());
     }
@@ -90,7 +91,7 @@ public class QuizController {
             @RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
         String adminSecret = System.getenv().getOrDefault("ADMIN_SECRET", "admin1234");
         if (!adminSecret.equals(secret)) {
-            return ResponseEntity.status(401).body("인증되지 않았습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증되지 않았습니다.");
         }
 
         try {
@@ -110,7 +111,7 @@ public class QuizController {
             @RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
         String adminSecret = System.getenv().getOrDefault("ADMIN_SECRET", "admin1234");
         if (!adminSecret.equals(secret)) {
-            return ResponseEntity.status(401).body("인증되지 않았습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증되지 않았습니다.");
         }
 
         try {
@@ -128,16 +129,16 @@ public class QuizController {
             @RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
         String adminSecret = System.getenv().getOrDefault("ADMIN_SECRET", "admin1234");
         if (!adminSecret.equals(secret)) {
-            return ResponseEntity.status(401).body("인증되지 않았습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증되지 않았습니다.");
         }
 
         try {
             quizService.deleteLecture(lectureId);
             return ResponseEntity.ok("강의가 삭제되었습니다.");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
