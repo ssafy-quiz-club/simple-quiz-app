@@ -41,6 +41,7 @@ export interface ApiExplanation {
 export interface ApiQuestionDto {
   id: number;
   content: string;               // 문제 본문
+  lecture: Lecture;              // 강의 정보
   answers: ApiAnswer[];          // 보기
   explanations?: ApiExplanation[]; // 해설(옵션)
 }
