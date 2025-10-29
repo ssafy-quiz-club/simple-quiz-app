@@ -32,7 +32,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
-      - run: npm run build
+      - run: npm run build -- --base=/simple-quiz-app/
       - run: cp -f dist/index.html dist/404.html || true
 
       - name: Deploy PR preview
