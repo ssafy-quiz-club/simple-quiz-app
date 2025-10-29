@@ -1,17 +1,20 @@
-import QuizPage from './pages/QuizPage';
+import { Route, Routes } from 'react-router-dom';
 import AdminPage from './pages/AdminPage';
+import QuizPage from './pages/QuizPage';
 import { GlobalStyle } from './styles/GlobalStyle';
 import { ThemeProvider } from 'styled-components';
 import { theme } from './theme';
+import Header from './components/Header';
 
 function App() {
-  // URL 파라미터로 관리자 페이지 접근: ?admin=true
-  const isAdminPage = new URLSearchParams(window.location.search).get('admin') === 'true';
-
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      {isAdminPage ? <AdminPage /> : <QuizPage />}
+      <Header />
+      <Routes>
+        <Route path="/" element={<QuizPage />} />
+        <Route path="/admin/*" element={<AdminPage />} />
+      </Routes>
     </ThemeProvider>
   );
 }

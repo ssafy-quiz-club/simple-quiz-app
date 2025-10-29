@@ -22,3 +22,16 @@ export async function deleteQuestionAdmin(questionId: number, secret: string): P
     headers: { 'X-Admin-Secret': secret }
   });
 }
+
+export async function addLectureAdmin(name: string, secret: string): Promise<Lecture> {
+  const res = await instance.post<Lecture>('/admin/lectures', { name }, {
+    headers: { 'X-Admin-Secret': secret }
+  });
+  return res.data;
+}
+
+export async function deleteLectureAdmin(lectureId: number, secret: string): Promise<void> {
+  await instance.delete(`/admin/lectures/${lectureId}`, {
+    headers: { 'X-Admin-Secret': secret }
+  });
+}

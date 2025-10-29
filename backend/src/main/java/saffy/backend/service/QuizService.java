@@ -52,6 +52,9 @@ public class QuizService {
     }
 
     private QuestionDto toQuestionDtoWithChildren(Question q) {
+        // Question -> Lecture -> LectureDto
+        LectureDto lectureDto = toLectureDto(q.getLecture());
+
         List<AnswerDto> answers = answerRepository.findByQuestionId(q.getId())
                 .stream()
                 .map(this::toAnswerDto)
@@ -62,7 +65,7 @@ public class QuizService {
                 .map(this::toExplanationDto)
                 .toList();
 
-        return new QuestionDto(q.getId(), q.getContent(), answers, exps);
+        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers, exps);
     }
 
     private AnswerDto toAnswerDto(Answer a) {
@@ -129,5 +132,29 @@ public class QuizService {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new IllegalArgumentException("문제 ID " + questionId + "를 찾을 수 없습니다."));
         questionRepository.delete(question);
+    }
+
+    /**
+     * 강의 추가
+     */
+    @Transactional
+    public Lecture createLecture(LectureDto lectureDto) {
+        Lecture newLecture = new Lecture();
+        newLecture.setName(lectureDto.getName());
+        return lectureRepository.save(newLecture);
+    }
+
+    /**
+     * 강의 삭제
+     */
+    @Transactional
+    public void deleteLecture(Long lectureId) {
+        // 해당 강의에 속한 문제가 있는지 확인
+        if (questionRepository.existsByLectureId(lectureId)) {
+            throw new IllegalStateException("해당 강의에 속한 문제가 있어 삭제할 수 없습니다.");
+        }
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new IllegalArgumentException("강의 ID " + lectureId + "를 찾을 수 없습니다."));
+        lectureRepository.delete(lecture);
     }
 }
