@@ -37,17 +37,18 @@ function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
     const choices = (q.answers ?? []).map(a => (a.content ?? a.text ?? '').toString());
     const answerIndex = Math.max(0, (q.answers ?? []).findIndex(a => a.correct === true));
 
-    const explanation =
-      q.explanations?.[0]?.content ??
-      q.explanations?.[0]?.text ??
-      undefined;
+    // 각 Answer의 explanation을 모아서 조합 (번호와 함께)
+    const explanationParts = (q.answers ?? [])
+      .map((a, idx) => a.explanation ? `${idx + 1}. ${a.explanation}` : null)
+      .filter(Boolean);
+    const explanation = explanationParts.length > 0 ? explanationParts.join('\n') : undefined;
 
     return {
       id: q.id,
       prompt: q.content,
       choices,
       answer: answerIndex === -1 ? 0 : answerIndex,
-      explanation, // ✅ 추가
+      explanation,
     };
   });
 }
