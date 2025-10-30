@@ -3,17 +3,11 @@ package saffy.backend.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import saffy.backend.dto.AnswerDto;
-import saffy.backend.dto.ExplanationDto;
 import saffy.backend.dto.LectureDto;
 import saffy.backend.dto.QuestionDto;
 import saffy.backend.dto.UploadQuestionDto;
-import saffy.backend.entity.Answer;
-import saffy.backend.entity.Explanation;
 import saffy.backend.entity.Lecture;
 import saffy.backend.entity.Question;
-import saffy.backend.repository.AnswerRepository;
-import saffy.backend.repository.ExplanationRepository;
 import saffy.backend.repository.LectureRepository;
 import saffy.backend.repository.QuestionRepository;
 
@@ -25,8 +19,6 @@ import java.util.List;
 public class QuizService {
 
     private final QuestionRepository questionRepository;
-    private final AnswerRepository answerRepository;
-    private final ExplanationRepository explanationRepository;
     private final LectureRepository lectureRepository;
 
     /** 강의 전체 목록 조회 */
@@ -52,28 +44,14 @@ public class QuizService {
     }
 
     private QuestionDto toQuestionDtoWithChildren(Question q) {
-        // Question -> Lecture -> LectureDto
         LectureDto lectureDto = toLectureDto(q.getLecture());
-
-        List<AnswerDto> answers = answerRepository.findByQuestionId(q.getId())
-                .stream()
-                .map(this::toAnswerDto)
-                .toList();
-
-        List<ExplanationDto> exps = explanationRepository.findByQuestionId(q.getId())
-                .stream()
-                .map(this::toExplanationDto)
-                .toList();
-
-        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers, exps);
-    }
-
-    private AnswerDto toAnswerDto(Answer a) {
-        return new AnswerDto(a.getId(), a.getContent(), a.isCorrect());
-    }
-
-    private ExplanationDto toExplanationDto(Explanation e) {
-        return new ExplanationDto(e.getId(), e.getContent());
+        return new QuestionDto(
+            q.getId(),
+            q.getContent(),
+            q.getCorrectAnswer(),
+            q.getExplanation(),
+            lectureDto
+        );
     }
 
     /**
@@ -90,28 +68,25 @@ public class QuizService {
         for (UploadQuestionDto.QuestionItem item : dto.getQuestions()) {
             // Question 생성
             Question question = new Question();
-            question.setContent(item.getContent());
-            question.setLecture(lecture);
-            questionRepository.save(question);
 
-            // Answer 생성 (보기들)
-            if (item.getChoices() != null) {
+            // content: 문제 본문 + 선택지들을 하나의 텍스트로 결합
+            StringBuilder contentBuilder = new StringBuilder(item.getContent());
+            if (item.getChoices() != null && !item.getChoices().isEmpty()) {
+                contentBuilder.append("\n");
                 for (int i = 0; i < item.getChoices().size(); i++) {
-                    Answer answer = new Answer();
-                    answer.setContent(item.getChoices().get(i));
-                    answer.setCorrect(i == item.getAnswerIndex()); // 정답 여부
-                    answer.setQuestion(question);
-                    answerRepository.save(answer);
+                    contentBuilder.append(i + 1).append(". ").append(item.getChoices().get(i)).append("\n");
                 }
             }
+            question.setContent(contentBuilder.toString());
 
-            // Explanation 생성 (선택)
-            if (item.getExplanation() != null && !item.getExplanation().isEmpty()) {
-                Explanation explanation = new Explanation();
-                explanation.setContent(item.getExplanation());
-                explanation.setQuestion(question);
-                explanationRepository.save(explanation);
-            }
+            // correctAnswer: answerIndex를 1-based로 변환 (0 -> 1, 1 -> 2, ...)
+            question.setCorrectAnswer(item.getAnswerIndex() != null ? item.getAnswerIndex() + 1 : null);
+
+            // explanation: 해설 그대로 저장
+            question.setExplanation(item.getExplanation());
+
+            question.setLecture(lecture);
+            questionRepository.save(question);
         }
     }
 

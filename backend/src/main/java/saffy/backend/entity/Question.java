@@ -5,9 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "questions")
 @Getter
@@ -20,18 +17,15 @@ public class Question {
     private Long id;
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String content;
+    private String content;  // 질문 + 4개 선택지 포함
 
-    // ✅ Lecture와 다대일 관계 (lecture_id 외래키)
+    @Column(nullable = false)
+    private Integer correctAnswer;  // 정답 번호 (1~4)
+
+    @Column(columnDefinition = "TEXT")
+    private String explanation;  // 해설 전체 텍스트
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lecture_id", nullable = false)
     private Lecture lecture;
-
-    // ✅ 하나의 Question → 여러 Answer
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Answer> answers = new ArrayList<>();
-
-    // ✅ 하나의 Question → 여러 Explanation
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Explanation> explanations = new ArrayList<>();
 }
