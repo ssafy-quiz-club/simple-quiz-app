@@ -10,9 +10,11 @@ export interface UploadQuestionData {
   lectureId: number;
   questions: {
     content: string;
-    choices: string[];
-    answerIndex: number;
-    explanation?: string;
+    choices: {
+      content: string;
+      isCorrect: boolean;
+      explanation: string;
+    }[];
   }[];
 }
 
