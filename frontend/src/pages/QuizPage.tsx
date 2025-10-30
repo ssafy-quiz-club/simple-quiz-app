@@ -1,7 +1,6 @@
 // src/pages/QuizPage.tsx
 import { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import quizDataJson from '../assets/ai_ml_basics_v1.json';
 import type { UiQuizData, UiQuestion, Lecture, ApiQuestionDto } from '../types';
 
 import { Header } from '../components/Header';
@@ -20,17 +19,6 @@ const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 const STORAGE_KEY = 'quiz_state_v3_ai_ml_react';
 const STORAGE_LECTURE = 'selected_lecture_id';
-
-// 초기 기본(로컬) 데이터
-const fallbackData: UiQuizData = {
-  meta: { title: (quizDataJson as any).meta?.title ?? '퀴즈' },
-  questions: (quizDataJson as any).questions?.map((q: any) => ({
-    id: q.id,
-    prompt: q.question ?? q.prompt ?? q.content,
-    choices: q.choices ?? [],
-    answer: q.answer ?? 0,
-  })) ?? [],
-};
 
 function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
   return questions.map((q) => {
@@ -69,35 +57,19 @@ function QuizPage() {
   const [errorLectures, setErrorLectures] = useState<string | null>(null);
   const [errorQuestions, setErrorQuestions] = useState<string | null>(null);
 
-  // 동적으로 채운 퀴즈 데이터 (없으면 fallback 사용)
+  // 동적으로 채운 퀴즈 데이터
   const [dynData, setDynData] = useState<UiQuizData | null>(null);
 
   // ===== 업로드 모달 상태 =====
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   // 현재 사용하는 데이터 소스
-  const data: UiQuizData = dynData ?? fallbackData;
+  const data: UiQuizData | null = dynData;
 
   const keyOf = (id: string | number) => String(id);
 
-  // ===== 최초 로드: 진행 상태/순서 복구 + 강의 목록 불러오기 =====
+  // ===== 최초 로드: 강의 목록 불러오기 =====
   useEffect(() => {
-    // 로컬 진행 상태 복구
-    const rawState = localStorage.getItem(STORAGE_KEY);
-    const saved = rawState ? JSON.parse(rawState) : null;
-
-    const initialOrder =
-      saved?.order && saved.order.length === data.questions.length
-        ? saved.order
-        : shuffle([...Array(data.questions.length).keys()]);
-
-    setOrder(initialOrder);
-    if (saved) {
-      setIndex(clamp(saved.index ?? 0, 0, initialOrder.length - 1));
-      setPicks(saved.picks ?? {});
-      setFinished(saved.finished ?? false);
-    }
-
     // 강의 선택 복구
     const savedLecture = localStorage.getItem(STORAGE_LECTURE);
     if (savedLecture) {
@@ -128,7 +100,6 @@ function QuizPage() {
     })();
 
     return () => { mounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ===== 진행 상태 저장 =====
@@ -200,14 +171,15 @@ function QuizPage() {
 
   // ===== 점수/현재문항 =====
   const score = useMemo(() => {
+    if (!data) return 0;
     return order.reduce((acc, qIdx) => {
       const q = data.questions[qIdx];
       return acc + ((picks[keyOf(q.id)] ?? -1) === q.answer ? 1 : 0);
     }, 0);
   }, [picks, order, data]);
 
-  const currentQ = data.questions[order[index]];
-  const totalQuestions = data.questions.length;
+  const currentQ = data ? data.questions[order[index]] : undefined;
+  const totalQuestions = data ? data.questions.length : 0;
 
   const handleChoiceClick = (choiceIndex: number) => {
     if (!currentQ || picks[keyOf(currentQ.id)] !== undefined) return;
@@ -306,7 +278,7 @@ function QuizPage() {
         </LectureBar>
 
         <Header
-          title={data.meta.title}
+          title={data?.meta.title ?? '퀴즈'}
           currentIndex={index}
           totalQuestions={totalQuestions}
           score={score}
@@ -339,7 +311,7 @@ function QuizPage() {
             />
           </ContentCard>
 
-          {finished && (
+          {finished && data && (
             <ContentCard as="section" aria-label="결과">
               <Results
                 score={score}
@@ -354,13 +326,15 @@ function QuizPage() {
 
         <Sidebar aria-label="문항 네비게이터">
           <Sticky>
-            <Navigator
-              order={order}
-              questions={data.questions as any}
-              picks={picks}
-              currentIndex={index}
-              onNavClick={handleNavClick}
-            />
+            {data && (
+              <Navigator
+                order={order}
+                questions={data.questions as any}
+                picks={picks}
+                currentIndex={index}
+                onNavClick={handleNavClick}
+              />
+            )}
           </Sticky>
         </Sidebar>
       </Main>

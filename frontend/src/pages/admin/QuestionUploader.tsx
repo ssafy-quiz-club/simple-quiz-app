@@ -30,9 +30,12 @@ export function QuestionUploader() {
     "questions": [
       {
         "content": "문제 내용을 입력하세요",
-        "choices": ["보기1", "보기2", "보기3", "보기4"],
-        "answerIndex": 0,
-        "explanation": "해설 내용 (선택사항)"
+        "choices": [
+          { "content": "보기1", "isCorrect": false, "explanation": "보기1 해설" },
+          { "content": "보기2", "isCorrect": false, "explanation": "보기2 해설" },
+          { "content": "보기3", "isCorrect": true, "explanation": "보기3 해설 (정답)" },
+          { "content": "보기4", "isCorrect": false, "explanation": "보기4 해설" }
+        ]
       }
     ]
   };
@@ -126,8 +129,8 @@ export function QuestionUploader() {
             <pre>{JSON.stringify(exampleJson, null, 2)}</pre>
             <ul>
               <li>`questions` 배열에 여러 문제를 추가할 수 있습니다.</li>
-              <li>`answerIndex`는 0부터 시작합니다 (0 = 첫 번째 보기).</li>
-              <li>`explanation`은 선택사항입니다.</li>
+              <li>각 보기(choice)마다 개별 해설(explanation)을 작성할 수 있습니다.</li>
+              <li>`isCorrect`를 true로 설정하여 정답을 지정합니다.</li>
             </ul>
           </ExampleBox>
         </ExampleSection>
