@@ -15,4 +15,5 @@ public class AnswerDto {
     private Long id;
     private String content;
     private boolean correct;
+    private String explanation;  // 해설 추가
 }

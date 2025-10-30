@@ -27,11 +27,7 @@ public class Question {
     @JoinColumn(name = "lecture_id", nullable = false)
     private Lecture lecture;
 
-    // ✅ 하나의 Question → 여러 Answer
+    // ✅ 하나의 Question → 여러 Answer (각 Answer에 해설 포함)
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Answer> answers = new ArrayList<>();
-
-    // ✅ 하나의 Question → 여러 Explanation
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Explanation> explanations = new ArrayList<>();
 }

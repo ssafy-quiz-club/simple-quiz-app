@@ -23,6 +23,9 @@ public class Answer {
     @Column(nullable = false)
     private boolean isCorrect;
 
+    @Column(columnDefinition = "TEXT")
+    private String explanation;  // 해설 (각 보기마다 개별 해설)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
     private Question question;

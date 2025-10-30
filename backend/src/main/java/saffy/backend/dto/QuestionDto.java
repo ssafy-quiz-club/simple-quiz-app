@@ -15,7 +15,6 @@ import lombok.Setter;
 public class QuestionDto {
     private Long id;
     private String content;
-    private LectureDto lecture; // 강의 정보 추가
-    private List<AnswerDto> answers;
-    private List<ExplanationDto> explanations;
+    private LectureDto lecture; // 강의 정보
+    private List<AnswerDto> answers;  // 각 Answer에 해설 포함됨
 }

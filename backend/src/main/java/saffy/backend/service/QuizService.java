@@ -4,16 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import saffy.backend.dto.AnswerDto;
-import saffy.backend.dto.ExplanationDto;
 import saffy.backend.dto.LectureDto;
 import saffy.backend.dto.QuestionDto;
 import saffy.backend.dto.UploadQuestionDto;
 import saffy.backend.entity.Answer;
-import saffy.backend.entity.Explanation;
 import saffy.backend.entity.Lecture;
 import saffy.backend.entity.Question;
 import saffy.backend.repository.AnswerRepository;
-import saffy.backend.repository.ExplanationRepository;
 import saffy.backend.repository.LectureRepository;
 import saffy.backend.repository.QuestionRepository;
 
@@ -26,7 +23,6 @@ public class QuizService {
 
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
-    private final ExplanationRepository explanationRepository;
     private final LectureRepository lectureRepository;
 
     /** 강의 전체 목록 조회 */
@@ -60,20 +56,11 @@ public class QuizService {
                 .map(this::toAnswerDto)
                 .toList();
 
-        List<ExplanationDto> exps = explanationRepository.findByQuestionId(q.getId())
-                .stream()
-                .map(this::toExplanationDto)
-                .toList();
-
-        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers, exps);
+        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers);
     }
 
     private AnswerDto toAnswerDto(Answer a) {
-        return new AnswerDto(a.getId(), a.getContent(), a.isCorrect());
-    }
-
-    private ExplanationDto toExplanationDto(Explanation e) {
-        return new ExplanationDto(e.getId(), e.getContent());
+        return new AnswerDto(a.getId(), a.getContent(), a.isCorrect(), a.getExplanation());
     }
 
     /**
@@ -94,23 +81,16 @@ public class QuizService {
             question.setLecture(lecture);
             questionRepository.save(question);
 
-            // Answer 생성 (보기들)
+            // Answer 생성 (보기들 - 각각 해설 포함)
             if (item.getChoices() != null) {
-                for (int i = 0; i < item.getChoices().size(); i++) {
+                for (UploadQuestionDto.ChoiceItem choice : item.getChoices()) {
                     Answer answer = new Answer();
-                    answer.setContent(item.getChoices().get(i));
-                    answer.setCorrect(i == item.getAnswerIndex()); // 정답 여부
+                    answer.setContent(choice.getContent());
+                    answer.setCorrect(choice.isCorrect());
+                    answer.setExplanation(choice.getExplanation());
                     answer.setQuestion(question);
                     answerRepository.save(answer);
                 }
-            }
-
-            // Explanation 생성 (선택)
-            if (item.getExplanation() != null && !item.getExplanation().isEmpty()) {
-                Explanation explanation = new Explanation();
-                explanation.setContent(item.getExplanation());
-                explanation.setQuestion(question);
-                explanationRepository.save(explanation);
             }
         }
     }
