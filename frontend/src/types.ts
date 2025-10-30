@@ -30,6 +30,7 @@ export interface ApiAnswer {
   content?: string;
   text?: string;
   correct?: boolean; // 정답 여부
+  explanation?: string; // 각 보기별 해설
 }
 
 export interface ApiExplanation {
