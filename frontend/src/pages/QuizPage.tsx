@@ -108,58 +108,65 @@ function QuizPage() {
   }, [order, index, picks, finished]);
 
   // ===== 선택한 강의가 바뀌면 문제 로드 =====
-  useEffect(() => {
-    if (selectedLectureId == null) return;
+useEffect(() => {
+  if (selectedLectureId == null) return;
 
-    let mounted = true;
-    (async () => {
-      setLoadingQuestions(true);
-      setErrorQuestions(null);
-      try {
-        const qs = await getQuestionsByLecture(selectedLectureId);
-        if (!mounted) return;
+  let mounted = true;
+  (async () => {
+    setLoadingQuestions(true);
+    setErrorQuestions(null);
+    try {
+      const qs = await getQuestionsByLecture(selectedLectureId);
+      if (!mounted) return;
 
-        // 1) API → UI 매핑
-        const uiQs = mapApiQuestionsToUi(qs);
+      const uiQs = mapApiQuestionsToUi(qs);
+      const shuffledUiQs = uiQs.map(shuffleChoicesForUiQuestion);
+      const selectedQuestions = shuffledUiQs.length > 30
+        ? fyShuffle([...shuffledUiQs]).slice(0, 30)
+        : shuffledUiQs;
 
-        // 2) 보기(choices) 먼저 셔플 + 정답 인덱스 보정
-        const shuffledUiQs = uiQs.map(shuffleChoicesForUiQuestion);
+      const nextData: UiQuizData = {
+        meta: {
+          title: `강의: ${lectures.find(l => l.id === selectedLectureId)?.name ?? selectedLectureId}`,
+        },
+        questions: selectedQuestions,
+      };
+      setDynData(nextData);
 
-        // 3) 랜덤 30개 선택 (문제가 30개보다 많으면)
-        const selectedQuestions = shuffledUiQs.length > 30
-          ? fyShuffle([...shuffledUiQs]).slice(0, 30)
-          : shuffledUiQs;
+      const nextOrder = fyShuffle([...Array(nextData.questions.length).keys()]);
+      setOrder(nextOrder);
+      setIndex(0);
+      setPicks({});
+      setFinished(false);
 
-        // 4) dynData 세팅
-        const nextData: UiQuizData = {
-          meta: {
-            title: `강의: ${lectures.find(l => l.id === selectedLectureId)?.name ?? selectedLectureId}`,
-          },
-          questions: selectedQuestions,
-        };
-        setDynData(nextData);
+    } catch (err: any) {
+      if (!mounted) return;
 
-        // 5) 문항 순서(order) 셔플
-        const nextOrder = fyShuffle([...Array(nextData.questions.length).keys()]);
-        setOrder(nextOrder);
-        setIndex(0);
-        setPicks({});
-        setFinished(false);
-      } catch (err: unknown) {
-        if (!mounted) return;
+      // 🔽 추가 부분: 404 감지 시 자동 복구
+      if (err?.response?.status === 404) {
+        console.warn('선택된 강의가 존재하지 않습니다. 초기화합니다.');
+        localStorage.removeItem(STORAGE_LECTURE);
+        setSelectedLectureId(null);
 
-        if (err instanceof Error) {
-          setErrorQuestions(err.message);
-        } else {
-          setErrorQuestions('문제를 불러오지 못했습니다.');
+        // 강의 목록 중 첫 번째 강의로 자동 전환
+        if (lectures.length > 0) {
+          const fallback = lectures[0].id;
+          setSelectedLectureId(fallback);
+          localStorage.setItem(STORAGE_LECTURE, String(fallback));
         }
-      } finally {
-        if (mounted) setLoadingQuestions(false);
-      }
-    })();
 
-    return () => { mounted = false; };
-  }, [selectedLectureId, lectures]);
+        setErrorQuestions('선택한 강의가 삭제되어 초기화되었습니다.');
+      } else {
+        setErrorQuestions(err?.message ?? '문제를 불러오지 못했습니다.');
+      }
+    } finally {
+      if (mounted) setLoadingQuestions(false);
+    }
+  })();
+
+  return () => { mounted = false; };
+}, [selectedLectureId, lectures]);
+
 
   // ===== 드롭다운 변경 =====
   const handleLectureChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
