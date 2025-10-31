@@ -31,7 +31,7 @@ function ChoiceCard({
   explanation?: string;
   onClick: () => void;
 }) {
-  const [flipped, setFlipped] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const state: 'correct' | 'wrong' | 'default' =
     isAnswered ? (isCorrect ? 'correct' : isPicked ? 'wrong' : 'default') : 'default';
@@ -39,32 +39,32 @@ function ChoiceCard({
   const handleClick = () => {
     if (!isAnswered) {
       onClick();
-      // 답변 후 0.3초 뒤에 자동으로 카드 뒤집기
-      setTimeout(() => setFlipped(true), 300);
-    } else {
-      // 이미 답변한 경우, 클릭하면 카드 토글
-      setFlipped(!flipped);
+    } else if (isCorrect) {
+      // 정답인 경우에만 토글 가능
+      setShowExplanation(!showExplanation);
     }
   };
 
+  // 정답이고 해설을 보여줄 때
+  const shouldShowExplanation = isAnswered && isCorrect && showExplanation;
+
   return (
     <ChoiceContainer onClick={handleClick}>
-      <ChoiceInner $flipped={flipped && isAnswered} $state={state}>
-        {/* 앞면: 선택지 */}
-        <ChoiceFront $state={state}>
-          <Keycap>{'ABCD'[choiceIndex]}</Keycap>
-          <span>{choice}</span>
-        </ChoiceFront>
-
-        {/* 뒷면: 해설 */}
-        <ChoiceBack $ok={isCorrect}>
-          <ExplainBadge $ok={isCorrect}>
-            {isCorrect ? '정답' : isPicked ? '오답' : ''}
-          </ExplainBadge>
-          {explanation && <BackText>{explanation}</BackText>}
-          {!explanation && <BackText>해설이 없습니다</BackText>}
-        </ChoiceBack>
-      </ChoiceInner>
+      <ChoiceContent $state={state}>
+        {!shouldShowExplanation ? (
+          // 선택지 표시
+          <>
+            <Keycap>{'ABCD'[choiceIndex]}</Keycap>
+            <ChoiceText>{choice}</ChoiceText>
+          </>
+        ) : (
+          // 정답 해설 표시
+          <ExplanationContent>
+            <ExplainBadge $ok={true}>정답</ExplainBadge>
+            {explanation ? explanation : '해설이 없습니다'}
+          </ExplanationContent>
+        )}
+      </ChoiceContent>
     </ChoiceContainer>
   );
 }
@@ -107,7 +107,7 @@ export function QuestionCard({
       </Choices>
 
       {isAnswered && (
-        <ClickHint>보기를 클릭하여 해설을 확인하세요</ClickHint>
+        <ClickHint>정답을 클릭하여 해설을 확인하세요</ClickHint>
       )}
 
       <Footer>
@@ -141,11 +141,12 @@ const Bar = styled.div`
 `;
 
 const Q = styled.div`
-  font-size: 19px;
-  line-height: 1.55;
-  margin: 12px 0 16px;
+  font-size: 22px;
+  line-height: 1.6;
+  margin: 12px 0 20px;
   letter-spacing: .1px;
   color: #e8edf3;
+  font-weight: 500;
 `;
 
 const Choices = styled.div`
@@ -153,36 +154,20 @@ const Choices = styled.div`
   gap: 12px;
 `;
 
-// 플립 카드 컨테이너
 const ChoiceContainer = styled.div`
-  perspective: 1000px;
   cursor: pointer;
-  min-height: 60px;
+  min-height: 70px;
 `;
 
-const ChoiceInner = styled.div<{ $flipped: boolean; $state: 'correct' | 'wrong' | 'default' }>`
-  position: relative;
+const ChoiceContent = styled.div<{ $state: 'correct' | 'wrong' | 'default' }>`
   width: 100%;
-  min-height: 60px;
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-  transform: ${({ $flipped }) => ($flipped ? 'rotateY(180deg)' : 'rotateY(0)')};
-`;
-
-const ChoiceFace = styled.div`
-  position: absolute;
-  width: 100%;
-  min-height: 60px;
-  backface-visibility: hidden;
+  min-height: 70px;
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   box-shadow: 0 2px 8px rgba(0,0,0,.25);
   display: flex;
   align-items: center;
-  gap: 10px;
-`;
-
-const ChoiceFront = styled(ChoiceFace)<{ $state: 'correct' | 'wrong' | 'default' }>`
+  gap: 12px;
   border: 1px solid #2e3a4d;
   background: #0d1322;
   color: #e8edf3;
@@ -202,24 +187,26 @@ const ChoiceFront = styled(ChoiceFace)<{ $state: 'correct' | 'wrong' | 'default'
   `}
 `;
 
-const ChoiceBack = styled(ChoiceFace)<{ $ok: boolean }>`
-  background: ${({ $ok }) => ($ok ? '#0b2d19' : '#2a0f0f')};
-  border: 1px solid ${({ $ok }) => ($ok ? '#14532d' : '#7f1d1d')};
-  color: #e8edf3;
-  transform: rotateY(180deg);
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 8px;
+const ChoiceText = styled.span`
+  flex: 1;
+  line-height: 1.5;
+`;
+
+const ExplanationContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  line-height: 1.5;
 `;
 
 const Keycap = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  font-size: 12px;
+  min-width: 30px;
+  height: 30px;
+  font-size: 13px;
   font-weight: 700;
   color: #dfe7ef;
   background: #1a2235;
@@ -241,14 +228,7 @@ const ExplainBadge = styled.span<{ $ok: boolean }>`
   border-radius: 999px;
   border: 1px solid ${({ $ok }) => ($ok ? '#166534' : '#991b1b')};
   background: ${({ $ok }) => ($ok ? '#065f46' : '#7f1d1d')};
-  margin-bottom: 4px;
-`;
-
-const BackText = styled.p`
-  margin: 0;
-  line-height: 1.5;
-  color: #e5e7eb;
-  font-size: 14px;
+  flex-shrink: 0;
 `;
 
 const ClickHint = styled.div`
