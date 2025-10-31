@@ -41,12 +41,20 @@ function ChoiceCard({
 
   const handleClick = () => {
     if (!isAnswered) {
+      // 첫 답변
       onClick();
       // 답변 직후 바로 해설 표시
       setShowExplanation(true);
-    } else if (isPicked) {
-      // 선택한 보기만 클릭 가능 (정답이든 오답이든)
-      setShowExplanation(!showExplanation);
+    } else {
+      // 이미 답변한 경우
+      if (isPicked) {
+        // 선택한 보기를 다시 클릭 → 해설 토글
+        setShowExplanation(!showExplanation);
+      } else {
+        // 다른 보기를 클릭 → 답변 변경
+        onClick();
+        setShowExplanation(true);
+      }
     }
   };
 
