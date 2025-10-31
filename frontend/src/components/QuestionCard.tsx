@@ -51,15 +51,15 @@ function ChoiceCard({
         // 선택한 보기를 다시 클릭 → 해설 토글
         setShowExplanation(!showExplanation);
       } else {
-        // 다른 보기를 클릭 → 답변 변경
+        // 다른 보기를 클릭 → 답변 변경하고 해설 토글
         onClick();
-        setShowExplanation(true);
+        setShowExplanation(!showExplanation);
       }
     }
   };
 
-  // 선택한 보기이고 해설을 보여줄 때
-  const shouldShowExplanation = isAnswered && isPicked && showExplanation;
+  // 답변 후 해설을 표시할 때 (선택 여부와 무관하게 각 보기마다 독립적)
+  const shouldShowExplanation = isAnswered && showExplanation;
 
   return (
     <ChoiceContainer onClick={handleClick}>
