@@ -42,6 +42,8 @@ function ChoiceCard({
   const handleClick = () => {
     if (!isAnswered) {
       onClick();
+      // 답변 직후 바로 해설 표시
+      setShowExplanation(true);
     } else if (isPicked) {
       // 선택한 보기만 클릭 가능 (정답이든 오답이든)
       setShowExplanation(!showExplanation);

@@ -6,6 +6,7 @@ interface NavigatorProps {
   order: number[];
   questions: Question[];
   picks: Record<string, number>;
+  firstPicks: Record<string, number>; // 첫 클릭 기록
   currentIndex: number;
   onNavClick: (index: number) => void;
   title?: string;
@@ -13,7 +14,7 @@ interface NavigatorProps {
 }
 
 export function Navigator({
-  order, questions, picks, currentIndex, onNavClick, title = '문항 네비게이터', className
+  order, questions, picks, firstPicks, currentIndex, onNavClick, title = '문항 네비게이터', className
 }: NavigatorProps) {
   return (
     <Wrap className={className} aria-label="문항 네비게이터">
@@ -22,16 +23,18 @@ export function Navigator({
         {order.map((qIdx, i) => {
           const q = questions[qIdx];
           const sel = picks[q.id];
-          const isOk = sel !== undefined ? sel === q.answer : null;
+          const firstSel = firstPicks[q.id];
+          // 첫 클릭 기준으로 정답/오답 판단
+          const isOk = firstSel !== undefined ? firstSel === q.answer : null;
 
           return (
             <Btn
               key={i}
               role="listitem"
               aria-current={i === currentIndex ? 'true' : undefined}
-              aria-label={`${i + 1}번${sel !== undefined ? (isOk ? ' (정답)' : ' (오답)') : ''}`}
+              aria-label={`${i + 1}번${firstSel !== undefined ? (isOk ? ' (정답)' : ' (오답)') : ''}`}
               $current={i === currentIndex}
-              $answered={sel !== undefined}
+              $answered={firstSel !== undefined}
               $ok={isOk === true}
               $ng={isOk === false}
               onClick={() => onNavClick(i)}

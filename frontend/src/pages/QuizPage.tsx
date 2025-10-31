@@ -51,6 +51,7 @@ function QuizPage() {
   const [index, setIndex] = useState(0);
   type PickMap = Record<string, number>;
   const [picks, setPicks] = useState<PickMap>({});
+  const [firstPicks, setFirstPicks] = useState<PickMap>({}); // 첫 클릭 기록 (Navigator 색상용)
   const [finished, setFinished] = useState(false);
 
   // ===== 강의 / 문제 API 상태 =====
@@ -108,8 +109,8 @@ function QuizPage() {
 
   // ===== 진행 상태 저장 =====
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ order, index, picks, finished }));
-  }, [order, index, picks, finished]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ order, index, picks, firstPicks, finished }));
+  }, [order, index, picks, firstPicks, finished]);
 
   // ===== 선택한 강의가 바뀌면 문제 로드 =====
 useEffect(() => {
@@ -141,6 +142,7 @@ useEffect(() => {
       setOrder(nextOrder);
       setIndex(0);
       setPicks({});
+      setFirstPicks({});
       setFinished(false);
 
     } catch (err: any) {
@@ -193,8 +195,16 @@ useEffect(() => {
   const totalQuestions = data ? data.questions.length : 0;
 
   const handleChoiceClick = (choiceIndex: number) => {
-    if (!currentQ || picks[keyOf(currentQ.id)] !== undefined) return;
-    setPicks(prev => ({ ...prev, [keyOf(currentQ.id)]: choiceIndex }));
+    if (!currentQ) return;
+    const qKey = keyOf(currentQ.id);
+
+    // 첫 클릭인 경우 firstPicks에 기록
+    if (firstPicks[qKey] === undefined) {
+      setFirstPicks(prev => ({ ...prev, [qKey]: choiceIndex }));
+    }
+
+    // 항상 picks 업데이트 (다른 답으로 변경 가능)
+    setPicks(prev => ({ ...prev, [qKey]: choiceIndex }));
   };
 
   const handleNext = () => {
@@ -207,19 +217,30 @@ useEffect(() => {
 
   const handleResetCurrentQuestion = () => {
     if (!currentQ) return;
+    const qKey = keyOf(currentQ.id);
     const newPicks = { ...picks };
-    delete newPicks[keyOf(currentQ.id)];
+    const newFirstPicks = { ...firstPicks };
+    delete newPicks[qKey];
+    delete newFirstPicks[qKey];
     setPicks(newPicks);
+    setFirstPicks(newFirstPicks);
   };
 
   const handleReset = () => {
     if (!confirm('진행을 초기화할까요?')) return;
-    setPicks({}); setIndex(0); setFinished(false);
+    setPicks({});
+    setFirstPicks({});
+    setIndex(0);
+    setFinished(false);
   };
 
   const handleShuffle = () => {
     if (!confirm('문항 순서를 재섞고 진행을 초기화합니다.')) return;
-    setOrder(shuffle([...Array(totalQuestions).keys()])); setPicks({}); setIndex(0); setFinished(false);
+    setOrder(shuffle([...Array(totalQuestions).keys()]));
+    setPicks({});
+    setFirstPicks({});
+    setIndex(0);
+    setFinished(false);
   };
 
   const handleUploadSuccess = () => {
@@ -411,6 +432,7 @@ useEffect(() => {
                 order={order}
                 questions={data.questions as any}
                 picks={picks}
+                firstPicks={firstPicks}
                 currentIndex={index}
                 onNavClick={handleNavClick}
               />
