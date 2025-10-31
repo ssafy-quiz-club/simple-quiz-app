@@ -10,6 +10,7 @@ interface QuestionCardProps {
   onChoiceClick: (choiceIndex: number) => void;
   onPrev: () => void;
   onNext: () => void;
+  onReset: () => void;
 }
 
 function ChoiceCard({
@@ -33,20 +34,22 @@ function ChoiceCard({
 }) {
   const [showExplanation, setShowExplanation] = useState(false);
 
+  // 답변 전: default
+  // 답변 후: 선택한 보기만 색상 표시 (정답=초록, 오답=빨강), 나머지는 default
   const state: 'correct' | 'wrong' | 'default' =
-    isAnswered ? (isCorrect ? 'correct' : isPicked ? 'wrong' : 'default') : 'default';
+    isAnswered && isPicked ? (isCorrect ? 'correct' : 'wrong') : 'default';
 
   const handleClick = () => {
     if (!isAnswered) {
       onClick();
-    } else if (isCorrect) {
-      // 정답인 경우에만 토글 가능
+    } else if (isPicked) {
+      // 선택한 보기만 클릭 가능 (정답이든 오답이든)
       setShowExplanation(!showExplanation);
     }
   };
 
-  // 정답이고 해설을 보여줄 때
-  const shouldShowExplanation = isAnswered && isCorrect && showExplanation;
+  // 선택한 보기이고 해설을 보여줄 때
+  const shouldShowExplanation = isAnswered && isPicked && showExplanation;
 
   return (
     <ChoiceContainer onClick={handleClick}>
@@ -58,9 +61,11 @@ function ChoiceCard({
             <ChoiceText>{choice}</ChoiceText>
           </>
         ) : (
-          // 정답 해설 표시
+          // 해설 표시
           <ExplanationContent>
-            <ExplainBadge $ok={true}>정답</ExplainBadge>
+            <ExplainBadge $ok={isCorrect}>
+              {isCorrect ? '정답' : '오답'}
+            </ExplainBadge>
             {explanation ? explanation : '해설이 없습니다'}
           </ExplanationContent>
         )}
@@ -71,7 +76,7 @@ function ChoiceCard({
 
 export function QuestionCard({
   question, currentIndex, totalQuestions, picked,
-  onChoiceClick, onPrev, onNext
+  onChoiceClick, onPrev, onNext, onReset
 }: QuestionCardProps) {
   const percent = (currentIndex / (totalQuestions - 1)) * 100;
   const isAnswered = picked !== undefined;
@@ -107,14 +112,19 @@ export function QuestionCard({
       </Choices>
 
       {isAnswered && (
-        <ClickHint>정답을 클릭하여 해설을 확인하세요</ClickHint>
+        <ClickHint>선택한 답을 클릭하여 해설을 확인하세요</ClickHint>
       )}
 
       <Footer>
         <Btn onClick={onPrev} disabled={currentIndex === 0}>이전</Btn>
-        <BtnPrimary onClick={onNext} disabled={!isAnswered}>
-          {currentIndex === totalQuestions - 1 ? '결과보기' : '다음'}
-        </BtnPrimary>
+        <FooterRight>
+          {isAnswered && (
+            <BtnReset onClick={onReset}>초기화</BtnReset>
+          )}
+          <BtnPrimary onClick={onNext} disabled={!isAnswered}>
+            {currentIndex === totalQuestions - 1 ? '결과보기' : '다음'}
+          </BtnPrimary>
+        </FooterRight>
       </Footer>
     </>
   );
@@ -242,7 +252,14 @@ const ClickHint = styled.div`
 const Footer = styled.div`
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-top: 18px;
+`;
+
+const FooterRight = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
 `;
 
 const Btn = styled.button`
@@ -267,6 +284,16 @@ const Btn = styled.button`
   &:disabled {
     opacity: .55;
     cursor: not-allowed;
+  }
+`;
+
+const BtnReset = styled(Btn)`
+  background: #1a1f2e;
+  border-color: #374151;
+
+  &:hover {
+    background: #252b3d;
+    border-color: #4b5563;
   }
 `;
 

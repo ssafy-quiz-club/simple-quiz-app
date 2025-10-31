@@ -205,6 +205,13 @@ useEffect(() => {
   const handlePrev = () => { setIndex(prev => clamp(prev - 1, 0, totalQuestions - 1)); setFinished(false); };
   const handleNavClick = (newIndex: number) => { setIndex(newIndex); setFinished(false); };
 
+  const handleResetCurrentQuestion = () => {
+    if (!currentQ) return;
+    const newPicks = { ...picks };
+    delete newPicks[keyOf(currentQ.id)];
+    setPicks(newPicks);
+  };
+
   const handleReset = () => {
     if (!confirm('진행을 초기화할까요?')) return;
     setPicks({}); setIndex(0); setFinished(false);
@@ -380,6 +387,7 @@ useEffect(() => {
               onChoiceClick={handleChoiceClick}
               onPrev={handlePrev}
               onNext={handleNext}
+              onReset={handleResetCurrentQuestion}
             />
           </ContentCard>
 
