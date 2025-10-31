@@ -5,6 +5,7 @@ export interface Question {
   choices: string[];
   answer: number;
   explanation?: string;
+  choiceExplanations?: string[]; // 각 선택지별 해설
 }
 
 export interface QuizMeta {
@@ -54,6 +55,7 @@ export interface UiQuestion {
   choices: string[];     // 보기 텍스트 배열
   answer: number;        // 정답 choice index
   explanation?: string;
+  choiceExplanations?: string[]; // 각 선택지별 해설
   // 필요하면 해설 등 추가 가능
 }
 
