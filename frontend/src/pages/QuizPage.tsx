@@ -25,7 +25,10 @@ function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
     const choices = (q.answers ?? []).map(a => (a.content ?? a.text ?? '').toString());
     const answerIndex = Math.max(0, (q.answers ?? []).findIndex(a => a.correct === true));
 
-    // 각 Answer의 explanation을 모아서 조합 (번호와 함께)
+    // 각 선택지별 해설 배열
+    const choiceExplanations = (q.answers ?? []).map(a => a.explanation || '');
+
+    // 전체 해설 (기존 호환성 유지)
     const explanationParts = (q.answers ?? [])
       .map((a, idx) => a.explanation ? `${idx + 1}. ${a.explanation}` : null)
       .filter(Boolean);
@@ -37,6 +40,7 @@ function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
       choices,
       answer: answerIndex === -1 ? 0 : answerIndex,
       explanation,
+      choiceExplanations,
     };
   });
 }
@@ -238,6 +242,66 @@ useEffect(() => {
     );
   }
 
+  // 문제가 없는 경우 처리
+  if (!data || data.questions.length === 0) {
+    return (
+      <Page>
+        <TopHeader>
+          <LectureBar>
+            <label htmlFor="lecture-select">강의</label>
+            <select
+              id="lecture-select"
+              value={selectedLectureId != null ? String(selectedLectureId) : ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                const next = v === "" ? null : Number(v);
+                setSelectedLectureId(next);
+                if (next != null) localStorage.setItem(STORAGE_LECTURE, String(next));
+                else localStorage.removeItem(STORAGE_LECTURE);
+              }}
+              disabled={loadingLectures}
+            >
+              <option value="" disabled hidden>강의 선택</option>
+              {lectures.map((l) => (
+                <option key={l.id} value={String(l.id)}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </LectureBar>
+
+          <Header
+            title={data?.meta.title ?? '퀴즈'}
+            currentIndex={0}
+            totalQuestions={0}
+            score={0}
+            onReset={handleReset}
+            onShuffle={handleShuffle}
+            onUpload={() => setShowUploadModal(true)}
+          />
+        </TopHeader>
+
+        <Main>
+          <ContentCard>
+            <EmptyMessage>
+              <h2>이 강의에는 문제가 없습니다</h2>
+              <p>업로드 버튼을 눌러 문제를 추가해보세요.</p>
+            </EmptyMessage>
+          </ContentCard>
+          <Sidebar aria-hidden />
+        </Main>
+
+        {showUploadModal && (
+          <UploadModal
+            lectures={lectures}
+            onClose={() => setShowUploadModal(false)}
+            onSuccess={handleUploadSuccess}
+          />
+        )}
+      </Page>
+    );
+  }
+
   if (!currentQ) {
     return (
       <Page>
@@ -307,11 +371,12 @@ useEffect(() => {
                 prompt: currentQ.prompt,
                 choices: currentQ.choices,
                 answer: currentQ.answer,
-                explanation: (currentQ as any).explanation, // ✅ 전달
+                explanation: (currentQ as any).explanation,
+                choiceExplanations: currentQ.choiceExplanations,
               }}
               currentIndex={index}
               totalQuestions={totalQuestions}
-              picked={picks[keyOf(currentQ.id)]}          // ← 키 일관성
+              picked={picks[keyOf(currentQ.id)]}
               onChoiceClick={handleChoiceClick}
               onPrev={handlePrev}
               onNext={handleNext}
@@ -421,4 +486,21 @@ const Sticky = styled.div`
   top: 20px;
   max-height: calc(100vh - 40px);
   overflow: auto;
+`;
+
+const EmptyMessage = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: #cbd5e1;
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: #e8edf3;
+  }
+
+  p {
+    font-size: 16px;
+    color: #94a3b8;
+  }
 `;
