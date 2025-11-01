@@ -17,4 +17,5 @@ public class QuestionDto {
     private String content;
     private LectureDto lecture; // 강의 정보
     private List<AnswerDto> answers;  // 각 Answer에 해설 포함됨
+    private String explanation; // 문제 전체에 대한 해설
 }
