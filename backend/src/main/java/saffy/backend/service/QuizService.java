@@ -68,7 +68,14 @@ public class QuizService {
                 .map(this::toAnswerDto)
                 .toList();
 
-        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers);
+        // 정답 보기에서 전체 해설 추출
+        String explanation = answers.stream()
+                .filter(AnswerDto::isCorrect)
+                .findFirst()
+                .map(AnswerDto::getExplanation)
+                .orElse(null); // 정답이 없거나 해설이 없는 경우 null
+
+        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers, explanation);
     }
 
     private AnswerDto toAnswerDto(Answer a) {
