@@ -13,9 +13,19 @@ export const fyShuffle = <T,>(arr: T[]): T[] => {
 
 // ✅ 보기(choices) 섞고 정답 인덱스 보정
 export const shuffleChoicesForUiQuestion = (q: UiQuestion): UiQuestion => {
-  const withIdx = q.choices.map((text, idx) => ({ text, idx }));
+  // 보기, 해설, 원본 인덱스를 함께 묶습니다.
+  const withIdx = q.choices.map((text, idx) => ({
+    text,
+    explanation: q.choiceExplanations?.[idx] || '',
+    idx,
+  }));
+
   const mixed = fyShuffle(withIdx);
+
+  // 섞은 후 다시 분리합니다.
   const choices = mixed.map(m => m.text);
+  const choiceExplanations = mixed.map(m => m.explanation);
   const answer = Math.max(0, mixed.findIndex(m => m.idx === q.answer));
-  return { ...q, choices, answer };
+
+  return { ...q, choices, answer, choiceExplanations };
 };
