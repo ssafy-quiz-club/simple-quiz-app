@@ -22,7 +22,7 @@ CREATE TABLE answers (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     question_id BIGINT NOT NULL,
     content TEXT NOT NULL,
-    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+    correct BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
 
