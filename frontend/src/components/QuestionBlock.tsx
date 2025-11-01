@@ -28,11 +28,11 @@ export function QuestionBlock({ content }: QuestionBlockProps) {
                 language={lang}
                 style={materialDark}
                 customStyle={{
-                    borderRadius: '12px',
                     padding: '16px',
                     fontSize: '14px',
                     lineHeight: 1.5,
                     overflowX: 'auto',
+                    border: 'none'
                 }}
             >
                 {code}
