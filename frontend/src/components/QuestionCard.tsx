@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled, { css } from 'styled-components';
 import type { Question } from '../types';
+import {QuestionBlock} from "./QuestionBlock.tsx";
 
 interface QuestionCardProps {
   question: Question;
@@ -98,7 +99,7 @@ export function QuestionCard({
         <Bar style={{ width: `${percent}%` }} />
       </Progress>
 
-      <Q>{question.question}</Q>
+      <QuestionBlock content={question.question} />
 
       <Choices>
         {question.choices.map((choice, i) => {
