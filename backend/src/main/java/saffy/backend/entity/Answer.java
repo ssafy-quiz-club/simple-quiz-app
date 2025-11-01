@@ -20,7 +20,7 @@ public class Answer {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-        @Column(name = "is_correct", nullable = false)
+        @Column(nullable = false)
     private boolean correct;
 
     @Column(columnDefinition = "TEXT")

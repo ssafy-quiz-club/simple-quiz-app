@@ -49,7 +49,7 @@ public class UploadQuestionDto {
     @AllArgsConstructor
     public static class ChoiceItem {
         private String content;      // 보기 내용
-        private boolean isCorrect;   // 정답 여부
+        private boolean correct;   // 정답 여부
         private String explanation;  // 해설
     }
 }
