@@ -21,7 +21,7 @@ public class Answer {
     private String content;
 
     @Column(nullable = false)
-    private boolean isCorrect;
+    private boolean correct;
 
     @Column(columnDefinition = "TEXT")
     private String explanation;  // 해설 (각 보기마다 개별 해설)

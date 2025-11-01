@@ -171,7 +171,7 @@ useEffect(() => {
   })();
 
   return () => { mounted = false; };
-}, [selectedLectureId, lectures]);
+}, [selectedLectureId]);
 
 
   // ===== 드롭다운 변경 =====
