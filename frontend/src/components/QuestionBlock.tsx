@@ -6,7 +6,6 @@ interface QuestionBlockProps {
     content: string;
 }
 
-
 export function QuestionBlock({ content }: QuestionBlockProps) {
     const regex = /```(\w+)?\n([\s\S]*?)```/g;
     const elements: JSX.Element[] = [];
@@ -23,20 +22,15 @@ export function QuestionBlock({ content }: QuestionBlockProps) {
         const code = match[2];
 
         elements.push(
-            <SyntaxHighlighter
+            <StyledSyntaxHighlighter
                 key={match.index}
                 language={lang}
                 style={materialDark}
-                customStyle={{
-                    padding: '16px',
-                    fontSize: '14px',
-                    lineHeight: 1.5,
-                    overflowX: 'auto',
-                    border: 'none'
-                }}
+                showLineNumbers={false}
+                wrapLines={true}
             >
                 {code}
-            </SyntaxHighlighter>
+            </StyledSyntaxHighlighter>
         );
 
         lastIndex = match.index + match[0].length;
@@ -50,6 +44,8 @@ export function QuestionBlock({ content }: QuestionBlockProps) {
     return <>{elements}</>;
 }
 
+/* ---------------- styled ---------------- */
+
 const Q = styled.div`
     font-size: 22px;
     line-height: 1.6;
@@ -57,4 +53,11 @@ const Q = styled.div`
     letter-spacing: 0.1px;
     color: #e8edf3;
     font-weight: 500;
+`;
+
+// SyntaxHighlighter 내부 code 스타일만 제거
+const StyledSyntaxHighlighter = styled(SyntaxHighlighter)`
+  code {
+    border: none !important;
+  }
 `;
