@@ -1,11 +1,14 @@
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import styled from 'styled-components';
 
 interface QuestionBlockProps {
     content: string;
 }
 
+
 export function QuestionBlock({ content }: QuestionBlockProps) {
-    const regex = /```([\s\S]*?)```/g;
+    const regex = /```(\w+)?\n([\s\S]*?)```/g;
     const elements: JSX.Element[] = [];
     let lastIndex = 0;
 
@@ -16,26 +19,30 @@ export function QuestionBlock({ content }: QuestionBlockProps) {
             elements.push(<Q key={lastIndex}>{content.slice(lastIndex, match.index)}</Q>);
         }
 
-        // 코드 블록
+        const lang = match[1] || 'text'; // 언어 없으면 기본 text
+        const code = match[2];
+
         elements.push(
-            <pre
+            <SyntaxHighlighter
                 key={match.index}
-                style={{
-                    background: '#0d1322',
-                    color: '#e8edf3',
-                    padding: '12px',
+                language={lang}
+                style={materialDark}
+                customStyle={{
                     borderRadius: '12px',
+                    padding: '16px',
+                    fontSize: '14px',
+                    lineHeight: 1.5,
                     overflowX: 'auto',
                 }}
             >
-        <code>{match[1]}</code>
-      </pre>
+                {code}
+            </SyntaxHighlighter>
         );
 
         lastIndex = match.index + match[0].length;
     }
 
-    // 마지막 코드 블록 이후 일반 텍스트
+    // 마지막 텍스트
     if (lastIndex < content.length) {
         elements.push(<Q key={lastIndex}>{content.slice(lastIndex)}</Q>);
     }
