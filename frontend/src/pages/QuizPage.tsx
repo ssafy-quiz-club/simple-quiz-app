@@ -28,11 +28,9 @@ function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
     // 각 선택지별 해설 배열
     const choiceExplanations = (q.answers ?? []).map(a => a.explanation || '');
 
-    // 전체 해설 (기존 호환성 유지)
-    const explanationParts = (q.answers ?? [])
-      .map((a, idx) => a.explanation ? `${idx + 1}. ${a.explanation}` : null)
-      .filter(Boolean);
-    const explanation = explanationParts.length > 0 ? explanationParts.join('\n') : undefined;
+    const correctAnsw = (q.answers ?? []).find(a => a.correct === true);
+    const explanation = correctAnsw?.explanation;
+
 
     return {
       id: q.id,
