@@ -1,5 +1,6 @@
 package saffy.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,6 +50,7 @@ public class UploadQuestionDto {
     @AllArgsConstructor
     public static class ChoiceItem {
         private String content;      // 보기 내용
+        @JsonAlias("isCorrect")
         private boolean correct;   // 정답 여부
         private String explanation;  // 해설
     }
