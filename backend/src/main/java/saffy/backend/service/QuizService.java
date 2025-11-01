@@ -29,6 +29,18 @@ public class QuizService {
     public List<LectureDto> getAllLectures() {
         return lectureRepository.findAll().stream()
                 .map(this::toLectureDto)
+                .sorted((a, b) -> {
+                    String[] aParts = a.getName().split(" ")[0].split("-");
+                    String[] bParts = b.getName().split(" ")[0].split("-");
+
+                    int a1 = Integer.parseInt(aParts[0]);
+                    int a2 = Integer.parseInt(aParts[1]);
+                    int b1 = Integer.parseInt(bParts[0]);
+                    int b2 = Integer.parseInt(bParts[1]);
+
+                    if (a1 != b1) return a1 - b1;
+                    return a2 - b2;
+                })
                 .toList();
     }
 
