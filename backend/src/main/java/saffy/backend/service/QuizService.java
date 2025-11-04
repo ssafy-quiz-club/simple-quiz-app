@@ -6,13 +6,16 @@ import org.springframework.transaction.annotation.Transactional;
 import saffy.backend.dto.AnswerDto;
 import saffy.backend.dto.LectureDto;
 import saffy.backend.dto.QuestionDto;
+import saffy.backend.dto.SubjectDto;
 import saffy.backend.dto.UploadQuestionDto;
 import saffy.backend.entity.Answer;
 import saffy.backend.entity.Lecture;
 import saffy.backend.entity.Question;
+import saffy.backend.entity.Subject;
 import saffy.backend.repository.AnswerRepository;
 import saffy.backend.repository.LectureRepository;
 import saffy.backend.repository.QuestionRepository;
+import saffy.backend.repository.SubjectRepository;
 
 import java.util.List;
 
@@ -24,6 +27,14 @@ public class QuizService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final LectureRepository lectureRepository;
+    private final SubjectRepository subjectRepository;
+
+    /** 과목 전체 목록 조회 */
+    public List<SubjectDto> getAllSubjects() {
+        return subjectRepository.findAll().stream()
+                .map(this::toSubjectDto)
+                .toList();
+    }
 
     /** 강의 전체 목록 조회 */
     public List<LectureDto> getAllLectures() {
@@ -55,8 +66,13 @@ public class QuizService {
     }
 
     // ====== DTO 매핑 ======
+    private SubjectDto toSubjectDto(Subject sub) {
+        return new SubjectDto(sub.getId(), sub.getName());
+    }
+
     private LectureDto toLectureDto(Lecture lec) {
-        return new LectureDto(lec.getId(), lec.getName());
+        Long subjectId = (lec.getSubject() != null) ? lec.getSubject().getId() : null;
+        return new LectureDto(lec.getId(), lec.getName(), subjectId);
     }
 
     private QuestionDto toQuestionDtoWithChildren(Question q) {
@@ -140,6 +156,14 @@ public class QuizService {
     public LectureDto createLecture(LectureDto lectureDto) {
         Lecture newLecture = new Lecture();
         newLecture.setName(lectureDto.getName());
+
+        // Subject 설정
+        if (lectureDto.getSubjectId() != null) {
+            Subject subject = subjectRepository.findById(lectureDto.getSubjectId())
+                    .orElseThrow(() -> new IllegalArgumentException("과목 ID " + lectureDto.getSubjectId() + "를 찾을 수 없습니다."));
+            newLecture.setSubject(subject);
+        }
+
         Lecture savedLecture = lectureRepository.save(newLecture);
         return toLectureDto(savedLecture);
     }

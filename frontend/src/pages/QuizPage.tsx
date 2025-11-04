@@ -1,7 +1,7 @@
 // src/pages/QuizPage.tsx
 import { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
-import type { UiQuizData, UiQuestion, Lecture, ApiQuestionDto } from '../types';
+import type { UiQuizData, UiQuestion, Lecture, Subject, ApiQuestionDto } from '../types';
 
 import { Header } from '../components/Header';
 import { Navigator } from '../components/Navigator';
@@ -10,6 +10,7 @@ import { Results } from '../components/Results';
 import { UploadModal } from '../components/UploadModal';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
+import { getSubjects } from '../services/subjectService';
 import { getLectures } from '../services/lectureService';
 import { getQuestionsByLecture } from '../services/questionService';
 import { fyShuffle, shuffleChoicesForUiQuestion } from '../utils/shuffle';
@@ -18,6 +19,7 @@ const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 const STORAGE_KEY = 'quiz_state_v3_ai_ml_react';
+const STORAGE_SUBJECT = 'selected_subject_id';
 const STORAGE_LECTURE = 'selected_lecture_id';
 
 function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
@@ -52,11 +54,15 @@ function QuizPage() {
   const [firstPicks, setFirstPicks] = useState<PickMap>({}); // 첫 클릭 기록 (Navigator 색상용)
   const [finished, setFinished] = useState(false);
 
-  // ===== 강의 / 문제 API 상태 =====
+  // ===== 과목 / 강의 / 문제 API 상태 =====
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [selectedLectureId, setSelectedLectureId] = useState<number | null>(null);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [loadingLectures, setLoadingLectures] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [errorSubjects, setErrorSubjects] = useState<string | null>(null);
   const [errorLectures, setErrorLectures] = useState<string | null>(null);
   const [errorQuestions, setErrorQuestions] = useState<string | null>(null);
 
@@ -71,7 +77,41 @@ function QuizPage() {
 
   const keyOf = (id: string | number) => String(id);
 
-  // ===== 최초 로드: 강의 목록 불러오기 =====
+  // ===== 최초 로드: 과목 목록 불러오기 =====
+  useEffect(() => {
+    // 과목 선택 복구
+    const savedSubject = localStorage.getItem(STORAGE_SUBJECT);
+    if (savedSubject) {
+      setSelectedSubjectId(Number(savedSubject));
+    }
+
+    // 과목 목록 로드
+    let mounted = true;
+    (async () => {
+      setLoadingSubjects(true);
+      setErrorSubjects(null);
+      try {
+        const list = await getSubjects();
+        if (!mounted) return;
+        setSubjects(list);
+
+        // 선택 없으면 첫 과목 자동 세팅
+        if (list.length && savedSubject == null) {
+          setSelectedSubjectId(list[0].id);
+          localStorage.setItem(STORAGE_SUBJECT, String(list[0].id));
+        }
+      } catch (err: any) {
+        if (!mounted) return;
+        setErrorSubjects(err?.message || '과목 목록을 불러오지 못했습니다.');
+      } finally {
+        if (mounted) setLoadingSubjects(false);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []);
+
+  // ===== 과목 선택 시: 강의 목록 불러오기 =====
   useEffect(() => {
     // 강의 선택 복구
     const savedLecture = localStorage.getItem(STORAGE_LECTURE);
@@ -172,7 +212,24 @@ useEffect(() => {
 }, [selectedLectureId]);
 
 
+  // ===== 과목에 따른 강의 필터링 =====
+  const filteredLectures = useMemo(() => {
+    if (selectedSubjectId == null) return lectures;
+    return lectures.filter(l => l.subjectId === selectedSubjectId);
+  }, [lectures, selectedSubjectId]);
+
   // ===== 드롭다운 변경 =====
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const v = Number(e.target.value);
+    const next = Number.isNaN(v) ? null : v;
+    setSelectedSubjectId(next);
+    if (next != null) localStorage.setItem(STORAGE_SUBJECT, String(next));
+
+    // 과목 변경 시 강의 초기화
+    setSelectedLectureId(null);
+    localStorage.removeItem(STORAGE_LECTURE);
+  };
+
   const handleLectureChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const v = Number(e.target.value);
     const next = Number.isNaN(v) ? null : v;
@@ -249,14 +306,16 @@ useEffect(() => {
   };
 
   // ===== 로딩/에러 UI =====
-  if (loadingLectures || loadingQuestions) {
+  if (loadingSubjects || loadingLectures || loadingQuestions) {
     return (
       <Page>
         <Main>
           <ContentCard>
             <LoadingSpinner
               message={
-                loadingLectures
+                loadingSubjects
+                  ? '과목 목록을 불러오는 중...'
+                  : loadingLectures
                   ? '강의 목록을 불러오는 중...'
                   : '문제를 불러오는 중...'
               }
@@ -274,21 +333,30 @@ useEffect(() => {
       <Page>
         <TopHeader>
           <LectureBar>
+            <label htmlFor="subject-select">과목</label>
+            <select
+              id="subject-select"
+              value={selectedSubjectId != null ? String(selectedSubjectId) : ""}
+              onChange={handleSubjectChange}
+              disabled={loadingSubjects}
+            >
+              <option value="" disabled hidden>과목 선택</option>
+              {subjects.map((s) => (
+                <option key={s.id} value={String(s.id)}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
             <label htmlFor="lecture-select">강의</label>
             <select
               id="lecture-select"
               value={selectedLectureId != null ? String(selectedLectureId) : ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                const next = v === "" ? null : Number(v);
-                setSelectedLectureId(next);
-                if (next != null) localStorage.setItem(STORAGE_LECTURE, String(next));
-                else localStorage.removeItem(STORAGE_LECTURE);
-              }}
-              disabled={loadingLectures}
+              onChange={handleLectureChange}
+              disabled={loadingLectures || selectedSubjectId == null}
             >
               <option value="" disabled hidden>강의 선택</option>
-              {lectures.map((l) => (
+              {filteredLectures.map((l) => (
                 <option key={l.id} value={String(l.id)}>
                   {l.name}
                 </option>
@@ -346,31 +414,39 @@ useEffect(() => {
   return (
     <Page>
       <TopHeader>
-        {/* 강의 선택 드롭다운 */}
+        {/* 과목/강의 선택 드롭다운 */}
         <LectureBar>
+          <label htmlFor="subject-select">과목</label>
+          <select
+            id="subject-select"
+            value={selectedSubjectId != null ? String(selectedSubjectId) : ""}
+            onChange={handleSubjectChange}
+            disabled={loadingSubjects}
+          >
+            <option value="" disabled hidden>과목 선택</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={String(s.id)}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+
           <label htmlFor="lecture-select">강의</label>
           <select
             id="lecture-select"
-            value={selectedLectureId != null ? String(selectedLectureId) : ""}  // 🔁 문자열로
-            onChange={(e) => {
-              const v = e.target.value;                      // 🔁 문자열
-              const next = v === "" ? null : Number(v);      // "" → null, 그 외 숫자 변환
-              setSelectedLectureId(next);
-              if (next != null) localStorage.setItem(STORAGE_LECTURE, String(next));
-              else localStorage.removeItem(STORAGE_LECTURE);
-            }}
-            disabled={loadingLectures}  // ✅ 질문 로딩과 무관하게 선택 가능
+            value={selectedLectureId != null ? String(selectedLectureId) : ""}
+            onChange={handleLectureChange}
+            disabled={loadingLectures || selectedSubjectId == null}
           >
-            {/* 선택 안내용 placeholder */}
             <option value="" disabled hidden>강의 선택</option>
-            {lectures.map((l) => (
-              <option key={l.id} value={String(l.id)}> {/* 🔁 문자열로 */}
+            {filteredLectures.map((l) => (
+              <option key={l.id} value={String(l.id)}>
                 {l.name}
               </option>
             ))}
           </select>
-          {(errorLectures || errorQuestions) && (
-            <ErrorText role="alert">{errorLectures ?? errorQuestions}</ErrorText>
+          {(errorSubjects || errorLectures || errorQuestions) && (
+            <ErrorText role="alert">{errorSubjects ?? errorLectures ?? errorQuestions}</ErrorText>
           )}
         </LectureBar>
 

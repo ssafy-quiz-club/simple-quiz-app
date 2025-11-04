@@ -9,6 +9,20 @@ CREATE TABLE admins (
     last_login DATETIME DEFAULT NULL
 );
 
+-- Create subjects table
+CREATE TABLE subjects (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(30) NOT NULL
+);
+
+-- Create lectures table
+CREATE TABLE lectures (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(30) NOT NULL,
+    subject_id BIGINT NOT NULL,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+);
+
 -- Create questions table
 CREATE TABLE questions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -32,10 +46,4 @@ CREATE TABLE explanations (
     question_id BIGINT NOT NULL,
     content TEXT NOT NULL,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
-);
-
--- Create explanations table
-CREATE TABLE lectures (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(30) NOT NULL
 );

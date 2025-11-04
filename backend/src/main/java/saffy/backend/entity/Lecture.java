@@ -22,6 +22,11 @@ public class Lecture {
     @Column(length = 30, nullable = false)
     private String name;
 
+    // ✅ Subject와 다대일 관계 (subject_id 외래키)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id", nullable = false)
+    private Subject subject;
+
     // ✅ 하나의 Lecture → 여러 Question
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
