@@ -1,5 +1,5 @@
 import instance from "./axiosInstance";
-import type { ApiQuestionDto } from "../types";
+import type { ApiQuestionDto, Lecture, Subject } from "../types";
 
 export async function adminAuth(password: string): Promise<boolean> {
   try {
@@ -23,8 +23,8 @@ export async function deleteQuestionAdmin(questionId: number, secret: string): P
   });
 }
 
-export async function addLectureAdmin(name: string, secret: string): Promise<Lecture> {
-  const res = await instance.post<Lecture>('/admin/lectures', { name }, {
+export async function addLectureAdmin(name: string, subjectId: number, secret: string): Promise<Lecture> {
+  const res = await instance.post<Lecture>('/admin/lectures', { name, subjectId }, {
     headers: { 'X-Admin-Secret': secret }
   });
   return res.data;
@@ -32,6 +32,19 @@ export async function addLectureAdmin(name: string, secret: string): Promise<Lec
 
 export async function deleteLectureAdmin(lectureId: number, secret: string): Promise<void> {
   await instance.delete(`/admin/lectures/${lectureId}`, {
+    headers: { 'X-Admin-Secret': secret }
+  });
+}
+
+export async function addSubjectAdmin(name: string, secret: string): Promise<Subject> {
+  const res = await instance.post<Subject>('/admin/subjects', { name }, {
+    headers: { 'X-Admin-Secret': secret }
+  });
+  return res.data;
+}
+
+export async function deleteSubjectAdmin(subjectId: number, secret: string): Promise<void> {
+  await instance.delete(`/admin/subjects/${subjectId}`, {
     headers: { 'X-Admin-Secret': secret }
   });
 }

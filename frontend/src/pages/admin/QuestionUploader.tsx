@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { uploadQuestions, type UploadQuestionData } from '../../services/questionService';
+import { getSubjects } from '../../services/subjectService';
 import { getLectures } from '../../services/lectureService';
-import type { Lecture } from '../../types';
+import type { Lecture, Subject } from '../../types';
 
 export function QuestionUploader() {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [selectedLectureId, setSelectedLectureId] = useState<number | null>(null);
   const [jsonText, setJsonText] = useState('');
@@ -12,19 +15,39 @@ export function QuestionUploader() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    const fetchLectures = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getLectures();
-        setLectures(data);
-        if (data.length > 0) {
-          setSelectedLectureId(data[0].id);
+        const [subjectsData, lecturesData] = await Promise.all([
+          getSubjects(),
+          getLectures()
+        ]);
+        setSubjects(subjectsData);
+        setLectures(lecturesData);
+
+        if (subjectsData.length > 0) {
+          setSelectedSubjectId(subjectsData[0].id);
         }
       } catch (error) {
-        setMessage({ type: 'error', text: '강의 목록을 불러오는 데 실패했습니다.' });
+        setMessage({ type: 'error', text: '데이터를 불러오는 데 실패했습니다.' });
       }
     };
-    fetchLectures();
+    fetchData();
   }, []);
+
+  // 과목에 따른 강의 필터링
+  const filteredLectures = useMemo(() => {
+    if (selectedSubjectId == null) return [];
+    return lectures.filter(l => l.subjectId === selectedSubjectId);
+  }, [lectures, selectedSubjectId]);
+
+  // 선택한 과목의 첫 번째 강의를 자동 선택
+  useEffect(() => {
+    if (filteredLectures.length > 0) {
+      setSelectedLectureId(filteredLectures[0].id);
+    } else {
+      setSelectedLectureId(null);
+    }
+  }, [filteredLectures]);
 
   const exampleJson = {
     "questions": [
@@ -94,26 +117,45 @@ export function QuestionUploader() {
       <UploaderGrid>
         <InputSection>
           <Section>
-            <Label>1. 강의 선택</Label>
+            <Label>1. 과목 선택</Label>
             <Select
-              value={selectedLectureId ?? ''}
-              onChange={(e) => setSelectedLectureId(Number(e.target.value))}
+              value={selectedSubjectId ?? ''}
+              onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
             >
-              {lectures.map((lec) => (
-                <option key={lec.id} value={lec.id}>
-                  {lec.name}
+              {subjects.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  {sub.name}
                 </option>
               ))}
             </Select>
           </Section>
 
           <Section>
-            <Label>2. JSON 파일 업로드</Label>
+            <Label>2. 강의 선택</Label>
+            <Select
+              value={selectedLectureId ?? ''}
+              onChange={(e) => setSelectedLectureId(Number(e.target.value))}
+              disabled={filteredLectures.length === 0}
+            >
+              {filteredLectures.length === 0 ? (
+                <option value="">이 과목에는 강의가 없습니다</option>
+              ) : (
+                filteredLectures.map((lec) => (
+                  <option key={lec.id} value={lec.id}>
+                    {lec.name}
+                  </option>
+                ))
+              )}
+            </Select>
+          </Section>
+
+          <Section>
+            <Label>3. JSON 파일 업로드</Label>
             <FileInput type="file" accept=".json" onChange={handleFileUpload} />
           </Section>
 
           <Section>
-            <Label>3. JSON 데이터 직접 입력</Label>
+            <Label>4. JSON 데이터 직접 입력</Label>
             <TextArea
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}

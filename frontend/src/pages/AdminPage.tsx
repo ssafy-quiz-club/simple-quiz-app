@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { adminAuth } from '../services/adminService';
 import { AdminLayout } from './admin/AdminLayout';
+import { SubjectManager } from './admin/SubjectManager';
 import { LectureManager } from './admin/LectureManager';
 import { QuestionManager } from './admin/QuestionManager';
 import { QuestionUploader } from './admin/QuestionUploader';
@@ -55,7 +56,8 @@ export function AdminPage() {
   return (
     <Routes>
       <Route path="/" element={<AdminLayout />}>
-        <Route index element={<Navigate to="lectures" replace />} />
+        <Route index element={<Navigate to="subjects" replace />} />
+        <Route path="subjects" element={<SubjectManager secret={secret} />} />
         <Route path="lectures" element={<LectureManager secret={secret} />} />
         <Route path="questions" element={<QuestionManager secret={secret} />} />
         <Route path="upload" element={<QuestionUploader />} />

@@ -8,6 +8,9 @@ export function AdminLayout() {
         <NavHeader>관리자 메뉴</NavHeader>
         <NavList>
           <NavItem>
+            <StyledNavLink to="/admin/subjects">과목 관리</StyledNavLink>
+          </NavItem>
+          <NavItem>
             <StyledNavLink to="/admin/lectures">강의 관리</StyledNavLink>
           </NavItem>
           <NavItem>

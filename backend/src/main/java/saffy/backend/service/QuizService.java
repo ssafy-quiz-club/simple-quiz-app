@@ -181,4 +181,32 @@ public class QuizService {
                 .orElseThrow(() -> new IllegalArgumentException("강의 ID " + lectureId + "를 찾을 수 없습니다."));
         lectureRepository.delete(lecture);
     }
+
+    /**
+     * 과목 추가
+     */
+    @Transactional
+    public SubjectDto createSubject(SubjectDto subjectDto) {
+        Subject newSubject = new Subject();
+        newSubject.setName(subjectDto.getName());
+        Subject savedSubject = subjectRepository.save(newSubject);
+        return toSubjectDto(savedSubject);
+    }
+
+    /**
+     * 과목 삭제
+     */
+    @Transactional
+    public void deleteSubject(Long subjectId) {
+        // 해당 과목에 속한 강의가 있는지 확인
+        long lectureCount = lectureRepository.findAll().stream()
+                .filter(l -> l.getSubject() != null && l.getSubject().getId().equals(subjectId))
+                .count();
+        if (lectureCount > 0) {
+            throw new IllegalStateException("해당 과목에 속한 강의가 있어 삭제할 수 없습니다.");
+        }
+        Subject subject = subjectRepository.findById(subjectId)
+                .orElseThrow(() -> new IllegalArgumentException("과목 ID " + subjectId + "를 찾을 수 없습니다."));
+        subjectRepository.delete(subject);
+    }
 }
