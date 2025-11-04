@@ -11,8 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LectureDto {
+public class SubjectDto {
     private Long id;
     private String name;
-    private Long subjectId;
 }

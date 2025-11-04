@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import saffy.backend.dto.LectureDto;
 import saffy.backend.dto.QuestionDto;
+import saffy.backend.dto.SubjectDto;
 import saffy.backend.dto.UploadQuestionDto;
 import saffy.backend.service.QuizService;
 
@@ -29,6 +30,12 @@ public class QuizController {
     @GetMapping("/api/ping")
     public String ping() {
         return "pong";
+    }
+
+    // 과목 목록
+    @GetMapping("/api/subjects")
+    public ResponseEntity<List<SubjectDto>> getAllSubjects() {
+        return ResponseEntity.ok(quizService.getAllSubjects());
     }
 
     // 강의 목록

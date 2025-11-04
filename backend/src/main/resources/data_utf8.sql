@@ -9,15 +9,18 @@ INSERT INTO admins (username, password) VALUES
     ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
 -- 비밀번호: password (BCrypt 암호화됨)
 
--- ✅ 2. 강의(lectures) 등록
-INSERT INTO lectures (name) VALUES
-                                ('Java 기본'),
-                                ('Spring Framework'),
-                                ('데이터베이스'),
-                                ('네트워크'),
-                                ('REST API 설계');
+-- ✅ 2. 과목(subjects) 등록
+INSERT INTO subjects (name) VALUES ('AI');
 
--- ✅ 3. 문제(questions) 등록
+-- ✅ 3. 강의(lectures) 등록
+INSERT INTO lectures (name, subject_id) VALUES
+                                ('Java 기본', 1),
+                                ('Spring Framework', 1),
+                                ('데이터베이스', 1),
+                                ('네트워크', 1),
+                                ('REST API 설계', 1);
+
+-- ✅ 4. 문제(questions) 등록
 -- 각 question에 lectures_id를 연결합니다.
 INSERT INTO questions (content, lecture_id) VALUES
                                                  ('자바의 객체지향 프로그래밍(OOP)의 4가지 핵심 특징은 무엇인가요?', 1),
@@ -26,7 +29,7 @@ INSERT INTO questions (content, lecture_id) VALUES
                                                  ('HTTP와 HTTPS의 차이점은 무엇인가요?', 4),
                                                  ('REST API의 주요 특징은 무엇인가요?', 5);
 
--- ✅ 4. 보기(answers) 등록
+-- ✅ 5. 보기(answers) 등록
 
 -- 문제 1: OOP 특징
 INSERT INTO answers (question_id, content, is_correct) VALUES
@@ -63,7 +66,7 @@ INSERT INTO answers (question_id, content, is_correct) VALUES
                                                            (5, 'DB 직접 접근, SQL 쿼리 호출', FALSE),
                                                            (5, '소켓 통신 기반의 실시간 데이터 전송', FALSE);
 
--- ✅ 5. 해설(explanations) 등록
+-- ✅ 6. 해설(explanations) 등록
 INSERT INTO explanations (question_id, content) VALUES
                                                     (1, '객체지향의 4대 특징은 다음과 같습니다. 캡슐화(데이터와 메서드를 하나로 묶음), 상속(기존 클래스의 재사용), 다형성(동일한 인터페이스로 다른 동작 수행), 추상화(불필요한 구현 세부사항을 숨김).'),
                                                     (2, 'IoC(Inversion of Control)는 객체 생성과 의존성 관리의 제어권을 개발자에서 프레임워크로 역전시킨 개념입니다. 스프링은 DI(Dependency Injection)를 통해 IoC를 구현합니다.'),

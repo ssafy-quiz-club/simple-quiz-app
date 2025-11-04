@@ -20,9 +20,15 @@ export interface QuizData {
 }
 
 // 백엔드 응답 DTO
+export interface Subject {
+  id: number;
+  name: string;
+}
+
 export interface Lecture {
   id: number;
   name: string;
+  subjectId?: number; // 과목 ID
 }
 
 export interface ApiAnswer {
