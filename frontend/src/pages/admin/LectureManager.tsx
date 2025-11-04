@@ -2,20 +2,36 @@ import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { addLectureAdmin, deleteLectureAdmin } from '../../services/adminService';
 import { getLectures } from '../../services/lectureService';
-import type { Lecture } from '../../types';
+import { getSubjects } from '../../services/subjectService';
+import type { Lecture, Subject } from '../../types';
 
 interface Props {
   secret: string;
 }
 
 export function LectureManager({ secret }: Props) {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [newLectureName, setNewLectureName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    loadSubjects();
     loadLectures();
   }, []);
+
+  const loadSubjects = async () => {
+    try {
+      const data = await getSubjects();
+      setSubjects(data);
+      if (data.length > 0) {
+        setSelectedSubjectId(data[0].id);
+      }
+    } catch (err) {
+      setError('과목 목록을 불러오지 못했습니다.');
+    }
+  };
 
   const loadLectures = async () => {
     try {
@@ -32,8 +48,12 @@ export function LectureManager({ secret }: Props) {
       alert('강의 이름을 입력하세요.');
       return;
     }
+    if (!selectedSubjectId) {
+      alert('과목을 선택하세요.');
+      return;
+    }
     try {
-      await addLectureAdmin(newLectureName, secret);
+      await addLectureAdmin(newLectureName, selectedSubjectId, secret);
       setNewLectureName('');
       await loadLectures();
       alert('강의가 추가되었습니다.');
@@ -57,6 +77,17 @@ export function LectureManager({ secret }: Props) {
     <PageContainer>
       <h1>강의 관리</h1>
       <Form onSubmit={handleAddLecture}>
+        <Select
+          value={selectedSubjectId ?? ''}
+          onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
+        >
+          <option value="" disabled>과목 선택</option>
+          {subjects.map(sub => (
+            <option key={sub.id} value={sub.id}>
+              {sub.name}
+            </option>
+          ))}
+        </Select>
         <Input
           type="text"
           placeholder="새 강의 이름"
@@ -90,7 +121,22 @@ const PageContainer = styled.div`
 const Form = styled.form`
   display: flex;
   gap: 8px;
-  max-width: 500px;
+  max-width: 700px;
+`;
+
+const Select = styled.select`
+  padding: 12px 16px;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-size: 16px;
+  min-width: 150px;
+
+  &:focus {
+    outline: none;
+    border-color: #2a6df3;
+  }
 `;
 
 const Input = styled.input`

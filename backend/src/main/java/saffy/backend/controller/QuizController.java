@@ -150,4 +150,44 @@ public class QuizController {
             return ResponseEntity.internalServerError().body("삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
+    // 과목 추가 (관리자용)
+    @PostMapping("/api/admin/subjects")
+    public ResponseEntity<?> createSubject(
+            @RequestBody SubjectDto subjectDto,
+            @RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
+        String adminSecret = System.getenv().getOrDefault("ADMIN_SECRET", "admin1234");
+        if (!adminSecret.equals(secret)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증되지 않았습니다.");
+        }
+
+        try {
+            SubjectDto createdSubjectDto = quizService.createSubject(subjectDto);
+            return ResponseEntity.ok(createdSubjectDto);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("과목 생성 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+    // 과목 삭제 (관리자용)
+    @DeleteMapping("/api/admin/subjects/{subjectId}")
+    public ResponseEntity<String> deleteSubject(
+            @PathVariable Long subjectId,
+            @RequestHeader(value = "X-Admin-Secret", required = false) String secret) {
+        String adminSecret = System.getenv().getOrDefault("ADMIN_SECRET", "admin1234");
+        if (!adminSecret.equals(secret)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증되지 않았습니다.");
+        }
+
+        try {
+            quizService.deleteSubject(subjectId);
+            return ResponseEntity.ok("과목이 삭제되었습니다.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("삭제 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
 }
