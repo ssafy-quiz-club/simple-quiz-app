@@ -171,8 +171,14 @@ public class QuizService {
      */
     @Transactional
     public LectureDto createLecture(LectureDto lectureDto) {
+        // 강의 이름 형식 검증 (예: "1-1 강의명")
+        String name = lectureDto.getName();
+        if (!isValidLectureName(name)) {
+            throw new IllegalArgumentException("강의 이름은 '숫자-숫자 강의명' 형식이어야 합니다. (예: 1-1 머신러닝 기초)");
+        }
+
         Lecture newLecture = new Lecture();
-        newLecture.setName(lectureDto.getName());
+        newLecture.setName(name);
 
         // Subject 설정
         if (lectureDto.getSubjectId() != null) {
@@ -183,6 +189,17 @@ public class QuizService {
 
         Lecture savedLecture = lectureRepository.save(newLecture);
         return toLectureDto(savedLecture);
+    }
+
+    /**
+     * 강의 이름 형식 검증 (숫자-숫자 강의명)
+     */
+    private boolean isValidLectureName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        // 정규식: "숫자-숫자 " 로 시작하는지 확인
+        return name.matches("^\\d+-\\d+\\s+.+");
     }
 
     /**

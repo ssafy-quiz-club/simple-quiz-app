@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { getAllQuestionsAdmin, deleteQuestionAdmin } from '../../services/adminService';
 import { getLectures } from '../../services/lectureService';
+import { getSubjects } from '../../services/subjectService';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
-import type { ApiQuestionDto, Lecture } from '../../types';
+import type { ApiQuestionDto, Lecture, Subject } from '../../types';
 
 interface Props {
   secret: string;
@@ -12,8 +13,10 @@ interface Props {
 export function QuestionManager({ secret }: Props) {
   const [questions, setQuestions] = useState<ApiQuestionDto[]>([]);
   const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [selectedLecture, setSelectedLecture] = useState<number | null>(null);
 
   useEffect(() => {
@@ -24,12 +27,14 @@ export function QuestionManager({ secret }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [questionsData, lecturesData] = await Promise.all([
+      const [questionsData, lecturesData, subjectsData] = await Promise.all([
         getAllQuestionsAdmin(secret),
         getLectures(),
+        getSubjects(),
       ]);
       setQuestions(questionsData);
       setLectures(lecturesData);
+      setSubjects(subjectsData);
     } catch (err: any) {
       setError(err?.message || '데이터를 불러오지 못했습니다.');
     } finally {
@@ -48,9 +53,21 @@ export function QuestionManager({ secret }: Props) {
     }
   };
 
-  const filteredQuestions = selectedLecture
-    ? questions.filter(q => q.lecture.id === selectedLecture)
-    : questions;
+  // 과목별 강의 필터링
+  const filteredLectures = selectedSubject
+    ? lectures.filter(lec => lec.subjectId === selectedSubject)
+    : lectures;
+
+  // 강의 또는 과목별 문제 필터링
+  const filteredQuestions = questions.filter(q => {
+    if (selectedLecture) {
+      return q.lecture.id === selectedLecture;
+    }
+    if (selectedSubject) {
+      return filteredLectures.some(lec => lec.id === q.lecture.id);
+    }
+    return true;
+  });
 
   if (loading) {
     return <LoadingSpinner message="문제 목록을 불러오는 중..." />;
@@ -64,13 +81,29 @@ export function QuestionManager({ secret }: Props) {
     <PageContainer>
       <h1>문제 목록</h1>
       <FilterBar>
+        <label>과목 필터:</label>
+        <select
+          value={selectedSubject ?? ''}
+          onChange={(e) => {
+            setSelectedSubject(e.target.value ? Number(e.target.value) : null);
+            setSelectedLecture(null); // 과목 변경 시 강의 선택 초기화
+          }}
+        >
+          <option value="">전체</option>
+          {subjects.map(sub => (
+            <option key={sub.id} value={sub.id}>
+              {sub.name}
+            </option>
+          ))}
+        </select>
+
         <label>강의 필터:</label>
         <select
           value={selectedLecture ?? ''}
           onChange={(e) => setSelectedLecture(e.target.value ? Number(e.target.value) : null)}
         >
           <option value="">전체</option>
-          {lectures.map(lec => (
+          {filteredLectures.map(lec => (
             <option key={lec.id} value={lec.id}>
               {lec.name}
             </option>
