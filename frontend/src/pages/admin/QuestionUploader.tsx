@@ -5,11 +5,14 @@ import { getSubjects } from '../../services/subjectService';
 import { getLectures } from '../../services/lectureService';
 import type { Lecture, Subject } from '../../types';
 
+type QuestionType = 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'TRUE_FALSE';
+
 export function QuestionUploader() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [selectedLectureId, setSelectedLectureId] = useState<number | null>(null);
+  const [questionType, setQuestionType] = useState<QuestionType>('MULTIPLE_CHOICE');
   const [jsonText, setJsonText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -49,19 +52,47 @@ export function QuestionUploader() {
     }
   }, [filteredLectures]);
 
-  const exampleJson = {
-    "questions": [
-      {
-        "content": "문제 내용을 입력하세요",
-        "choices": [
-          { "content": "보기1", "isCorrect": false, "explanation": "보기1 해설" },
-          { "content": "보기2", "isCorrect": false, "explanation": "보기2 해설" },
-          { "content": "보기3", "isCorrect": true, "explanation": "보기3 해설 (정답)" },
-          { "content": "보기4", "isCorrect": false, "explanation": "보기4 해설" }
-        ]
-      }
-    ]
+  const exampleJsonMap = {
+    MULTIPLE_CHOICE: {
+      "questions": [
+        {
+          "content": "다음 중 Python의 특징이 아닌 것은?",
+          "questionType": "MULTIPLE_CHOICE",
+          "choices": [
+            { "content": "동적 타입 언어", "isCorrect": false, "explanation": "Python은 동적 타입 언어입니다." },
+            { "content": "컴파일 언어", "isCorrect": true, "explanation": "Python은 인터프리터 언어입니다." },
+            { "content": "객체지향 언어", "isCorrect": false, "explanation": "Python은 객체지향을 지원합니다." },
+            { "content": "고수준 언어", "isCorrect": false, "explanation": "Python은 고수준 언어입니다." }
+          ]
+        }
+      ]
+    },
+    SHORT_ANSWER: {
+      "questions": [
+        {
+          "content": "2024 + 1은?",
+          "questionType": "SHORT_ANSWER",
+          "choices": [
+            { "content": "2025", "isCorrect": true, "explanation": "2024 + 1 = 2025입니다." }
+          ]
+        }
+      ]
+    },
+    TRUE_FALSE: {
+      "questions": [
+        {
+          "content": "서울은 대한민국의 수도이다",
+          "questionType": "TRUE_FALSE",
+          "choices": [
+            { "content": "O", "isCorrect": true, "explanation": "서울은 1394년부터 대한민국의 수도입니다." },
+            { "content": "X", "isCorrect": false, "explanation": null }
+          ]
+        }
+      ]
+    }
   };
+
+  const exampleJson = exampleJsonMap[questionType];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -150,12 +181,24 @@ export function QuestionUploader() {
           </Section>
 
           <Section>
-            <Label>3. JSON 파일 업로드</Label>
+            <Label>3. 문제 유형 선택</Label>
+            <Select
+              value={questionType}
+              onChange={(e) => setQuestionType(e.target.value as QuestionType)}
+            >
+              <option value="MULTIPLE_CHOICE">객관식 (Multiple Choice)</option>
+              <option value="SHORT_ANSWER">주관식 (Short Answer)</option>
+              <option value="TRUE_FALSE">OX 문제 (True/False)</option>
+            </Select>
+          </Section>
+
+          <Section>
+            <Label>4. JSON 파일 업로드</Label>
             <FileInput type="file" accept=".json" onChange={handleFileUpload} />
           </Section>
 
           <Section>
-            <Label>4. JSON 데이터 직접 입력</Label>
+            <Label>5. JSON 데이터 직접 입력</Label>
             <TextArea
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
@@ -170,9 +213,12 @@ export function QuestionUploader() {
             <strong>JSON 형식 예시:</strong>
             <pre>{JSON.stringify(exampleJson, null, 2)}</pre>
             <ul>
+              <li>`questionType`: 문제 유형 (MULTIPLE_CHOICE, SHORT_ANSWER, TRUE_FALSE)</li>
               <li>`questions` 배열에 여러 문제를 추가할 수 있습니다.</li>
-              <li>각 보기(choice)마다 개별 해설(explanation)을 작성할 수 있습니다.</li>
-              <li>`isCorrect`를 true로 설정하여 정답을 지정합니다.</li>
+              <li>객관식: 4개의 보기 추가, 정답에 `isCorrect: true`</li>
+              <li>주관식: 1개의 정답 보기만 추가</li>
+              <li>OX: O와 X 두 개의 보기, 정답에 `isCorrect: true`</li>
+              <li>정답 보기의 `explanation`에만 해설 작성 (다른 보기는 null)</li>
             </ul>
           </ExampleBox>
         </ExampleSection>

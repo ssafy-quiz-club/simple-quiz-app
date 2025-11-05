@@ -13,7 +13,7 @@ export function LectureManager({ secret }: Props) {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
-  const [newLectureName, setNewLectureName] = useState('');
+  const [newLectureName, setNewLectureName] = useState('1-1 ');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,9 +52,17 @@ export function LectureManager({ secret }: Props) {
       alert('과목을 선택하세요.');
       return;
     }
+
+    // 강의 이름 형식 검증 (숫자-숫자 강의명)
+    const namePattern = /^\d+-\d+\s+.+/;
+    if (!namePattern.test(newLectureName)) {
+      alert('강의 이름은 "숫자-숫자 강의명" 형식이어야 합니다.\n예: 1-1 머신러닝 기초');
+      return;
+    }
+
     try {
       await addLectureAdmin(newLectureName, selectedSubjectId, secret);
-      setNewLectureName('');
+      setNewLectureName('1-1 '); // 초기화 시 기본값으로 복구
       await loadLectures();
       alert('강의가 추가되었습니다.');
     } catch (err: any) {
@@ -90,7 +98,7 @@ export function LectureManager({ secret }: Props) {
         </Select>
         <Input
           type="text"
-          placeholder="새 강의 이름"
+          placeholder="예: 1-1 머신러닝 기초"
           value={newLectureName}
           onChange={(e) => setNewLectureName(e.target.value)}
         />
@@ -100,12 +108,14 @@ export function LectureManager({ secret }: Props) {
       {error && <ErrorText>{error}</ErrorText>}
 
       <LectureList>
-        {lectures.map(lec => (
-          <LectureItem key={lec.id}>
-            <span>{lec.name} (ID: {lec.id})</span>
-            <DeleteBtn onClick={() => handleDeleteLecture(lec.id)}>삭제</DeleteBtn>
-          </LectureItem>
-        ))}
+        {lectures
+          .filter(lec => selectedSubjectId === null || lec.subjectId === selectedSubjectId)
+          .map(lec => (
+            <LectureItem key={lec.id}>
+              <span>{lec.name} (ID: {lec.id})</span>
+              <DeleteBtn onClick={() => handleDeleteLecture(lec.id)}>삭제</DeleteBtn>
+            </LectureItem>
+          ))}
       </LectureList>
     </PageContainer>
   );
