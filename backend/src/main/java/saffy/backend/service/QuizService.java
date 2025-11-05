@@ -91,7 +91,14 @@ public class QuizService {
                 .map(AnswerDto::getExplanation)
                 .orElse(null); // 정답이 없거나 해설이 없는 경우 null
 
-        return new QuestionDto(q.getId(), q.getContent(), lectureDto, answers, explanation);
+        return QuestionDto.builder()
+                .id(q.getId())
+                .content(q.getContent())
+                .questionType(q.getQuestionType())
+                .lecture(lectureDto)
+                .answers(answers)
+                .explanation(explanation)
+                .build();
     }
 
     private AnswerDto toAnswerDto(Answer a) {
@@ -114,6 +121,16 @@ public class QuizService {
             Question question = new Question();
             question.setContent(item.getContent());
             question.setLecture(lecture);
+
+            // questionType 설정 (없으면 기본값 MULTIPLE_CHOICE)
+            if (item.getQuestionType() != null) {
+                try {
+                    question.setQuestionType(saffy.backend.entity.QuestionType.valueOf(item.getQuestionType()));
+                } catch (IllegalArgumentException e) {
+                    question.setQuestionType(saffy.backend.entity.QuestionType.MULTIPLE_CHOICE);
+                }
+            }
+
             questionRepository.save(question);
 
             // Answer 생성 (보기들 - 각각 해설 포함)

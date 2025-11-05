@@ -2,6 +2,7 @@ export interface Question {
   id: string;
   type: string;
   question: string;
+  questionType?: 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'TRUE_FALSE'; // 문제 유형
   choices: string[];
   answer: number;
   explanation?: string;
@@ -49,6 +50,7 @@ export interface ApiExplanation {
 export interface ApiQuestionDto {
   id: number;
   content: string;               // 문제 본문
+  questionType: 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'TRUE_FALSE'; // 문제 유형
   lecture: Lecture;              // 강의 정보
   answers: ApiAnswer[];          // 보기
   explanations?: ApiExplanation[]; // 해설(옵션)
@@ -58,6 +60,7 @@ export interface ApiQuestionDto {
 export interface UiQuestion {
   id: number | string;
   prompt: string;        // = content
+  questionType: 'MULTIPLE_CHOICE' | 'SHORT_ANSWER' | 'TRUE_FALSE'; // 문제 유형
   choices: string[];     // 보기 텍스트 배열
   answer: number;        // 정답 choice index
   explanation?: string;

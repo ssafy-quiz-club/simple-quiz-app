@@ -28,6 +28,7 @@ CREATE TABLE questions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     lecture_id BIGINT NOT NULL,
     content TEXT NOT NULL,
+    question_type ENUM('MULTIPLE_CHOICE', 'SHORT_ANSWER', 'TRUE_FALSE') NOT NULL DEFAULT 'MULTIPLE_CHOICE',
     FOREIGN KEY (lecture_id) REFERENCES lectures(id) ON DELETE CASCADE
 );
 
@@ -36,14 +37,7 @@ CREATE TABLE answers (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     question_id BIGINT NOT NULL,
     content TEXT NOT NULL,
+    explanation TEXT,
     correct BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
-);
-
--- Create explanations table
-CREATE TABLE explanations (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    question_id BIGINT NOT NULL,
-    content TEXT NOT NULL,
     FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
