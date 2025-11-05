@@ -22,6 +22,10 @@ public class Question {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "question_type", nullable = false)
+    private QuestionType questionType = QuestionType.MULTIPLE_CHOICE;
+
     // ✅ Lecture와 다대일 관계 (lecture_id 외래키)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lecture_id", nullable = false)

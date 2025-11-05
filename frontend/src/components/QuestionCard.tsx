@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import type { Question } from '../types';
-import {QuestionBlock} from "./QuestionBlock.tsx";
+import { QuestionBlock } from "./QuestionBlock.tsx";
+import { MultipleChoiceCard } from './MultipleChoiceCard';
+import { TrueFalseCard } from './TrueFalseCard';
+import { ShortAnswerCard } from './ShortAnswerCard';
 
 interface QuestionCardProps {
   question: Question;
@@ -14,84 +16,15 @@ interface QuestionCardProps {
   onReset: () => void;
 }
 
-function ChoiceCard({
-  choice,
-  choiceIndex,
-  label,
-  isAnswered,
-  isCorrect,
-  isPicked,
-  explanation,
-  onClick
-}: {
-  choice: string;
-  choiceIndex: number;
-  label: string;
-  isAnswered: boolean;
-  isCorrect: boolean;
-  isPicked: boolean;
-  explanation?: string;
-  onClick: () => void;
-}) {
-  const [showExplanation, setShowExplanation] = useState(false);
-
-  // 답변 전: default
-  // 답변 후: 선택한 보기만 색상 표시 (정답=초록, 오답=빨강), 나머지는 default
-  const state: 'correct' | 'wrong' | 'default' =
-    isAnswered && isPicked ? (isCorrect ? 'correct' : 'wrong') : 'default';
-
-  const handleClick = () => {
-    if (!isAnswered) {
-      // 첫 답변
-      onClick();
-      // 답변 직후 바로 해설 표시
-      setShowExplanation(true);
-    } else {
-      // 이미 답변한 경우
-      if (isPicked) {
-        // 선택한 보기를 다시 클릭 → 해설 토글
-        setShowExplanation(!showExplanation);
-      } else {
-        // 다른 보기를 클릭 → 답변 변경하고 해설 토글
-        onClick();
-        setShowExplanation(!showExplanation);
-      }
-    }
-  };
-
-  // 답변 후 해설을 표시할 때 (선택 여부와 무관하게 각 보기마다 독립적)
-  const shouldShowExplanation = isAnswered && showExplanation;
-
-  return (
-    <ChoiceContainer onClick={handleClick}>
-      <ChoiceContent $state={state}>
-        {!shouldShowExplanation ? (
-          // 선택지 표시
-          <>
-            <Keycap>{'ABCD'[choiceIndex]}</Keycap>
-            <ChoiceText>{choice}</ChoiceText>
-          </>
-        ) : (
-          // 해설 표시
-          <ExplanationContent>
-            <ExplainBadge $ok={isCorrect}>
-              {isCorrect ? '정답' : '오답'}
-            </ExplainBadge>
-            {explanation ? explanation : '해설이 없습니다'}
-          </ExplanationContent>
-        )}
-      </ChoiceContent>
-    </ChoiceContainer>
-  );
-}
-
 export function QuestionCard({
   question, currentIndex, totalQuestions, picked,
   onChoiceClick, onPrev, onNext, onReset
 }: QuestionCardProps) {
   const percent = (currentIndex / (totalQuestions - 1)) * 100;
   const isAnswered = picked !== undefined;
-  const isCorrect = isAnswered && picked === question.answer;
+
+  // questionType 결정 (기본값: MULTIPLE_CHOICE)
+  const questionType = (question as any).questionType || 'MULTIPLE_CHOICE';
 
   return (
     <>
@@ -101,29 +34,29 @@ export function QuestionCard({
 
       <QuestionBlock content={question.question} />
 
-      <Choices>
-        {question.choices.map((choice, i) => {
-          const isThisCorrect = i === question.answer;
-          const isThisPicked = i === picked;
+      {/* 문제 유형에 따라 다른 컴포넌트 렌더링 */}
+      {questionType === 'MULTIPLE_CHOICE' && (
+        <MultipleChoiceCard
+          question={question}
+          picked={picked}
+          onChoiceClick={onChoiceClick}
+        />
+      )}
 
-          return (
-            <ChoiceCard
-              key={`${question.id}-${i}-${choice.slice(0,12)}`}
-              choice={choice}
-              choiceIndex={i}
-              label={'ABCD'[i]}
-              isAnswered={isAnswered}
-              isCorrect={isThisCorrect}
-              isPicked={isThisPicked}
-              explanation={question.choiceExplanations?.[i]}
-              onClick={() => onChoiceClick(i)}
-            />
-          );
-        })}
-      </Choices>
+      {questionType === 'TRUE_FALSE' && (
+        <TrueFalseCard
+          question={question}
+          picked={picked}
+          onChoiceClick={onChoiceClick}
+        />
+      )}
 
-      {isAnswered && (
-        <ClickHint>선택한 답을 클릭하여 해설을 확인하세요</ClickHint>
+      {questionType === 'SHORT_ANSWER' && (
+        <ShortAnswerCard
+          question={question}
+          picked={picked}
+          onChoiceClick={onChoiceClick}
+        />
       )}
 
       <Footer>
@@ -159,105 +92,6 @@ const Bar = styled.div`
   background: linear-gradient(90deg, #2a6df3, #26c26a);
   box-shadow: 0 0 12px rgba(38,194,106,.35);
   transition: width .25s ease;
-`;
-
-const Q = styled.div`
-  font-size: 22px;
-  line-height: 1.6;
-  margin: 12px 0 20px;
-  letter-spacing: .1px;
-  color: #e8edf3;
-  font-weight: 500;
-`;
-
-const Choices = styled.div`
-  display: grid;
-  gap: 12px;
-`;
-
-const ChoiceContainer = styled.div`
-  cursor: pointer;
-  min-height: 70px;
-`;
-
-const ChoiceContent = styled.div<{ $state: 'correct' | 'wrong' | 'default' }>`
-  width: 100%;
-  min-height: 70px;
-  border-radius: 14px;
-  padding: 16px 18px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.25);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid #2e3a4d;
-  background: #0d1322;
-  color: #e8edf3;
-  transition: border-color .12s ease, background .12s ease;
-
-  &:hover {
-    border-color: #435269;
-  }
-
-  ${({ $state }) => $state === 'correct' && css`
-    border-color: #14532d;
-    background: #0b2d19;
-  `}
-  ${({ $state }) => $state === 'wrong' && css`
-    border-color: #7f1d1d;
-    background: #2a0f0f;
-  `}
-`;
-
-const ChoiceText = styled.span`
-  flex: 1;
-  line-height: 1.5;
-`;
-
-const ExplanationContent = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  line-height: 1.5;
-`;
-
-const Keycap = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  height: 30px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #dfe7ef;
-  background: #1a2235;
-  border: 1px solid #2f3e58;
-  border-radius: 8px;
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.05);
-  flex-shrink: 0;
-`;
-
-const ExplainBadge = styled.span<{ $ok: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  height: 24px;
-  padding: 0 10px;
-  font-weight: 700;
-  font-size: 11px;
-  border-radius: 999px;
-  border: 1px solid ${({ $ok }) => ($ok ? '#166534' : '#991b1b')};
-  background: ${({ $ok }) => ($ok ? '#065f46' : '#7f1d1d')};
-  flex-shrink: 0;
-`;
-
-const ClickHint = styled.div`
-  margin-top: 12px;
-  text-align: center;
-  font-size: 13px;
-  color: #94a3b8;
-  font-style: italic;
 `;
 
 const Footer = styled.div`

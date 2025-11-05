@@ -37,6 +37,7 @@ function mapApiQuestionsToUi(questions: ApiQuestionDto[]): UiQuestion[] {
     return {
       id: q.id,
       prompt: q.content,
+      questionType: q.questionType,
       choices,
       answer: answerIndex === -1 ? 0 : answerIndex,
       explanation,

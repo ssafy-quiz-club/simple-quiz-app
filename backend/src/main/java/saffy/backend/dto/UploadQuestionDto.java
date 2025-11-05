@@ -41,6 +41,7 @@ public class UploadQuestionDto {
     @AllArgsConstructor
     public static class QuestionItem {
         private String content;             // 문제 본문
+        private String questionType;        // 문제 유형 (MULTIPLE_CHOICE, SHORT_ANSWER, TRUE_FALSE)
         private List<ChoiceItem> choices;   // 보기 목록 (각 보기에 정답 여부 + 해설)
     }
 
